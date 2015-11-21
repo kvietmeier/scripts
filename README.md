@@ -1,1 +1,2 @@
-# My repo of utility scripts I use for setting up storage and monitoring systems
+# My Script Repo 
+Utility scripts I use for setting up storage and monitoring systems
