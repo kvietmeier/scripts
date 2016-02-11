@@ -8,21 +8,30 @@ set -ex
 #  \____|_|\___/ \__,_|\__,_|_|  \___/ \__,_|_| |_|\__,_|_|   \__, | |_|  |_|  \_/  |_|    
 #                                                             |___/                        
 #
-# Source script came from - 
+# The original source for this script came from - 
 # https://gist.github.com/cwest/87050bbc2258200a63e8
 #
-# I localizefd my own copy
+# I localized my own copy and made it modular
 #
 # Prerequisites and Assumptions
-# 1. Tested on a mac with up-to-date operating system and XCode installed.
+# 1. Late model Macbook Pro (I have only tested this on Yosemite 10.11) with XCode installed.
 # 2. Modern vagrant and VirtualBox installed.
 # 3. git installed.
 # 4. A modern ruby installed (via rbenv, rvm, or similar).
 #
-# You may need to reduce the number of compilation workers and parallel update jobs.  
+# Note - You may need to reduce the number of compilation workers and parallel update jobs.  
+# https://bosh.io/docs/deployment-manifest.html#compilation
+# Example (the defauult looks like 6, this will cause the vm to time out):
+# compilation:
+#   workers: 2
 # 
+# update:
+#   canaries: 1
+#   max_in_flight: 10
 
-# vars
+
+
+# Setup variables
 BOSH_DIR=/Volumes/SD_Card/projects/vagrant
 VM_MEMORY=8048 # 8G of Memory.
 WORKSPACE=$(mktemp -d $BOSH_DIR/cf-workspace-XXXX)
@@ -43,11 +52,9 @@ main () {
     create_org
 }
 
-
-# Don't need these
 # Only do once (Spiff in my PATH)
 initial_setup () {
-    #  - add check for xcode
+    #  - add check for xcode and/or existing spiff etc
     cd $WORKSPACE
     mkdir -p bin && cd $WORKSPACE/bin
     curl -L -o spiff.zip "https://github.com/cloudfoundry-incubator/spiff/releases/download/v1.0.7/spiff_darwin_amd64.zip"
@@ -66,7 +73,7 @@ git_clone () {
     git clone https://github.com/pivotal-cf/cf-redis-release.git
 }
 
-### BOSH and Cloud Foundry
+### BOSH and Cloud Foundry Install ###
 
 # Setup Vagrant VM
 vagrant_up () {
