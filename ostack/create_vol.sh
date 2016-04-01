@@ -12,7 +12,7 @@ for vol in {001..500}
    do
      echo "cinder create 10 --display-name XtremIO_Vol${vol} --volume-type XtremIO"
      echo "...."
-     cinder create 10 --display-name XtremIO_Vol${vol} --volume-type XtremIO &> /dev/null
+     #cinder create 10 --display-name XtremIO_Vol${vol} --volume-type XtremIO &> /dev/null
    done
 
 sleep 10
