@@ -16,7 +16,7 @@ echo "`date` = "
 echo "`date` = Press <RETURN> to continue"
 read 
 
-for vol in {001..20}
+for vol in $(seq -f "%03g" 1 20)
    do
      echo "`date` = cinder create 10 --display-name XtremIO_Vol${vol} --volume-type XtremIO"
      #echo "...."
@@ -29,7 +29,10 @@ echo "`date` = Completed Volume Creation"
 sleep 1
 echo "`date` = cinder list"
 cinder list
+
+numvols=$(cinder list | grep Xtr | wc -l)
+
 echo "`date` = "
-echo "`date` = $(cinder list | grep Xtr | wc -l) Volumes Created" 
+echo "`date` = $numvols Volumes Created" 
 echo "`date` = "
 sleep 5
