@@ -1,0 +1,915 @@
+
+
+
+###==============================================================###
+   Cinder functions to test
+###==============================================================###
+
+
+### Volumes - 
+<script this>
+Create Empty Volume
+	Bulk create 200 volumes on XtremIO
+List volumes
+
+--> Extend volume here???
+    (If we extend volume hosting OS, we have to deal with the filesystem)
+
+Delete volumes
+	Bulk delete 200 volumes previously created
+
+- Instances w/Volumes
+(not easy to automate - glance copy very slow)
+Copy Glance Image to volume
+	Done for 5 volumes - takes a long time to copy image oer 1GbE
+	(show not bootable)
+Attach volume to Instance
+	(show now bootable)
+Boot from now bootable volume (nova boot starts it)
+	Login to Instance and verify it has booted and is using correct Image
+
+
+* Create some vols to attach for SnapShots
+
+- Snapshots
+Create Snapshots
+  List snap
+
+  Create volume from SS
+  
+  Attach SSvolume to instance
+  	partition
+  	create filesystem
+  	mount
+  	copy files
+  	unmount
+  Detach SSvol from instance
+  
+  Attach to new instance
+  	mount /dev/vdb1
+  	list files
+  	delete file
+  	unmount
+  
+  Detach
+  
+  Attach to original instance
+  	mount /dev/vdb1
+  	verify change in files
+
+Delete snapshot
+
+Attach volumes to instance
+Detach volumes from instance
+
+
+
+To Test:
+Volume Functions:
+	Extend
+	Clone
+	get stats
+	create thin
+	create thick
+	create compressed
+	create dedupe
+	make read only
+
+Not all of these are supported:
+### Not supported directly
+cinder --help | grep clone
+cinder --help | grep thin
+cinder --help | grep thick
+cinder --help | grep compressed
+cinder --help | grep dedupe
+cinder --help | grep read
+
+
+ ## get stats
+    get-capabilities    Show backend volume stats and properties. Admin only.
+    (can't get this to work)
+ 
+
+ ## readonly-mode-update
+    Updates volume read-only access-mode flag.
+
+vietmeik@Skarn (~/sd/projects/atc/emc)$ cinder help readonly-mode-update
+usage: cinder readonly-mode-update <volume> <True|true|False|false>
+
+Updates volume read-only access-mode flag.
+
+Positional arguments:
+  <volume>              ID of volume to update.
+  <True|true|False|false>
+                        Enables or disables update of volume to read-only
+                        access mode.
+
+
+## extend              
+   Attempts to extend size of an existing volume.
+
+vietmeik@Skarn (~/sd/projects/atc/emc)$ cinder help extend
+usage: cinder extend <volume> <new_size>
+
+Attempts to extend size of an existing volume.
+
+Positional arguments:
+  <volume>    Name or ID of volume to extend.
+  <new_size>  New size of volume, in GiBs.
+
+
+
+
+
+###==============================================================###
+### - Services
+###==============================================================###
+
+[root@fuel ~]# cat restart-cinder.sh
+#!/bin/bash
+
+# Restart cinder on all nodes
+ssh root@cinder "service cinder-volume restart"
+ssh root@control1 "service cinder-api restart"
+ssh root@control1 "service cinder-scheduler restart"
+
+[root@fuel ~]# cat restart-neutron.sh
+#!/bin/bash
+
+# Restart neutron on all control nodes
+ssh root@control1 "service neutron-server restart"
+ssh root@control1 "service neutron-dhcp-agent restart"
+ssh root@control1 "service neutron-l3-agent restart"
+ssh root@control1 "service neutron-metadata-agent restart"
+#ssh root@control1 "service neutron-openvswitch-agent restart"
+
+[root@fuel ~]# cat restart-nova.sh
+#!/bin/bash
+
+# Restart nova on all compute nodes
+ssh root@nova1 "service nova-compute restart"
+ssh root@nova2 "service nova-compute restart"
+ssh root@nova3 "service nova-compute restart"
+
+ssh root@control1 "~/restart-nova.sh"
+
+
+
+
+
+
+###==============================================================###
+   Glance Images - 
+###==============================================================###
+
+# - Default image won't allow SSH with password
+
+# - Install guestfish and miodify image
+root@fuel temp]# guestfish
+
+Welcome to guestfish, the libguestfs filesystem interactive shell for
+editing virtual machine filesystems.
+
+Type: 'help' for help on commands
+      'man' to read the manual
+      'quit' to quit the shell
+
+><fs> add CentOS-7-x86_64-Modified-1602.qcow2
+><fs> run
+><fs> mount /dev/sda1 /
+><fs> vi /etc/ssh/sshd_config
+><fs> umount /dev/sda1
+><fs> exit
+
+root@node-4:~/temp# glance image-create --name='Centos7-Custom02' --is-public=true --container-format=bare --disk-format=qcow2 < CentOS-7-x86_64-Modified-1602.qcow2
+
+root@node-4:~/temp# glance image-list
++--------------------------------------+------------------+-------------+------------------+-----------+--------+
+| ID                                   | Name             | Disk Format | Container Format | Size      | Status |
++--------------------------------------+------------------+-------------+------------------+-----------+--------+
+| 37557a30-5bf2-4371-bf92-b415ccf57f56 | Centos6_4        | qcow2       | bare             | 735248384 | active |
+| fbf263e5-27cb-46a7-b182-541b8ed02f96 | Centos7          | qcow2       | bare             | 914685952 | active |
+| 811fed1f-7d13-4da2-900e-f33e5ceff682 | Centos7-Custom01 | qcow2       | bare             | 914685952 | active |
+| e27b0fd4-cd5a-4cbe-955f-3d632dd33bc5 | cirros image     | qcow2       | bare             | 13287936  | active |
+| 7402df73-9a4e-43f9-8aba-79320753105e | TestVM           | qcow2       | bare             | 14024704  | active |
+| 5ab71bcd-b41f-4127-9a7d-70fa1e94d0b4 | Ubuntu14_04      | qcow2       | bare             | 259260928 | active |
++--------------------------------------+------------------+-------------+------------------+-----------+--------+
+
+
+
+
+###==============================================================###
+   Cinder 
+###==============================================================###
+
+# - nova.conf
+[DEFAULT]
+...
+libvirt_iscsi_multipath=true
+use_cow_images=False
+...
+
+
+# - cinder.conf  (needs to be on all nodes runningn cinder services)
+
+[DEFAULT]
+enabled_backends=lvm,XtremIO
+...
+# these set for troubleshooting
+debug=True
+verbose=True
+...
+
+## Backends
+[lvm]
+volume_backend_name=lvm
+volume_driver=cinder.volume.drivers.lvm.LVMISCSIDriver
+volume_group=cinder
+
+[XtremIO]
+volume_backend_name=XtremIO
+volume_driver=cinder.volume.drivers.emc.xtremio.XtremIOISCSIDriver
+use_multipath_for_image_xfer=true
+san_ip=10.255.155.126
+san_login=cinderapi
+san_password=WWTwwt1
+xtremio_cluster_name=single-brick
+
+
+# - Cinder Volume Commands
+root@node-4:~# cinder service-list
++------------------+-------------------------------------+------+---------+-------+----------------------------+-----------------+
+|      Binary      |                 Host                | Zone |  Status | State |         Updated_at         | Disabled Reason |
++------------------+-------------------------------------+------+---------+-------+----------------------------+-----------------+
+| cinder-scheduler |         node-3.wwtpoc.local         | nova | enabled |   up  | 2016-03-30T21:04:02.000000 |       None      |
+| cinder-scheduler |         node-6.wwtpoc.local         | nova | enabled |   up  | 2016-03-30T21:04:00.000000 |       None      |
+|  cinder-volume   |         node-4.wwtpoc.local         | nova | enabled |  down | 2016-03-22T21:42:03.000000 |       None      |
+|  cinder-volume   |     node-4.wwtpoc.local@XtremIO     | nova | enabled |   up  | 2016-03-30T21:03:58.000000 |       None      |
+|  cinder-volume   | node-4.wwtpoc.local@backend XtremIO | nova | enabled |  down | 2016-03-23T02:43:39.000000 |       None      |
+|  cinder-volume   |   node-4.wwtpoc.local@backend lvm   | nova | enabled |  down | 2016-03-23T02:43:39.000000 |       None      |
+|  cinder-volume   |       node-4.wwtpoc.local@lvm       | nova | enabled |   up  | 2016-03-30T21:03:58.000000 |       None      |
++------------------+-------------------------------------+------+---------+-------+----------------------------+-----------------+
+
+
+# - Create and map volume types to backends - must match label in cinder.conf
+# Could only run on control node.....
+root@node-3:/var/log/cinder# cinder type-create XtremIO
+root@node-3:/var/log/cinder# cinder type-create LVM
+root@node-3:/var/log/cinder# cinder type-key XtremIO set volume_backend_name=XtremIO
+root@node-3:/var/log/cinder# cinder type-key LVM set volume_backend_name=lvm
+
+
+# - Create an empty volume (bare LUN)
+cinder create 10 --display-name XtermIOTest01 --volume-type XtremIO
+
+# - Extend a volume:
+vietmeik@Skarn (~/sd/projects/atc/emc)$ cinder help extend
+usage: cinder extend <volume> <new_size>
+
+Attempts to extend size of an existing volume.
+
+Positional arguments:
+  <volume>    Name or ID of volume to extend.
+  <new_size>  New size of volume, in GiBs.
+
+vietmeik@Skarn (~/sd/projects/atc/emc)$ cinder list
++--------------------------------------+-----------+---------------+------+-------------+----------+--------------------------------------+
+|                  ID                  |   Status  |      Name     | Size | Volume Type | Bootable |             Attached to              |
++--------------------------------------+-----------+---------------+------+-------------+----------+--------------------------------------+
+| 0466c610-6f28-41d7-8f72-b4db5ef4074e |   in-use  | XtermIO_Vol04 |  10  |   XtremIO   |   true   | 9e7317d1-c976-42fd-a7e4-35d12c26ec62 |
+| 05608e2c-da3e-4a27-a64d-ba5ad5237025 | available |  ExtendTest01 |  10  |   XtremIO   |  false   |                                      |
+| 70f4ff10-fc99-4eb7-8f3d-06fca3d2cd63 |   in-use  | XtermIO_Vol05 |  10  |   XtremIO   |   true   | f803d726-02ec-444a-984f-355276a2b15d |
+| 800c1d09-e836-48cb-a07a-d6a83b36d10c |   in-use  | XtermIO_Vol01 |  10  |   XtremIO   |   true   | b147e9f5-3d8f-4214-9078-0eec75c34258 |
+| a6c8692b-d66c-4262-b83f-a9d6b123305e |   in-use  | XtermIO_Vol02 |  10  |   XtremIO   |   true   | dcf1ef4b-dabf-4d91-8557-b33a377eb794 |
+| fb03318b-98c4-4310-ae13-4fbed9b6cb46 |   in-use  | XtermIO_Vol03 |  10  |   XtremIO   |   true   | 070a9f50-6969-40f4-bf18-2a1462c52b04 |
++--------------------------------------+-----------+---------------+------+-------------+----------+--------------------------------------+
+
+vietmeik@Skarn (~/sd/projects/atc/emc)$ cinder extend 05608e2c-da3e-4a27-a64d-ba5ad5237025 50
+
+vietmeik@Skarn (~/sd/projects/atc/emc)$ cinder list
++--------------------------------------+-----------+---------------+------+-------------+----------+--------------------------------------+
+|                  ID                  |   Status  |      Name     | Size | Volume Type | Bootable |             Attached to              |
++--------------------------------------+-----------+---------------+------+-------------+----------+--------------------------------------+
+| 0466c610-6f28-41d7-8f72-b4db5ef4074e |   in-use  | XtermIO_Vol04 |  10  |   XtremIO   |   true   | 9e7317d1-c976-42fd-a7e4-35d12c26ec62 |
+| 05608e2c-da3e-4a27-a64d-ba5ad5237025 | available |  ExtendTest01 |  50  |   XtremIO   |  false   |                                      |
+| 70f4ff10-fc99-4eb7-8f3d-06fca3d2cd63 |   in-use  | XtermIO_Vol05 |  10  |   XtremIO   |   true   | f803d726-02ec-444a-984f-355276a2b15d |
+| 800c1d09-e836-48cb-a07a-d6a83b36d10c |   in-use  | XtermIO_Vol01 |  10  |   XtremIO   |   true   | b147e9f5-3d8f-4214-9078-0eec75c34258 |
+| a6c8692b-d66c-4262-b83f-a9d6b123305e |   in-use  | XtermIO_Vol02 |  10  |   XtremIO   |   true   | dcf1ef4b-dabf-4d91-8557-b33a377eb794 |
+| fb03318b-98c4-4310-ae13-4fbed9b6cb46 |   in-use  | XtermIO_Vol03 |  10  |   XtremIO   |   true   | 070a9f50-6969-40f4-bf18-2a1462c52b04 |
++--------------------------------------+-----------+---------------+------+-------------+----------+--------------------------------------+
+
+
+# - Copy Glance Image to volume on creation (example)
+cinder create 10 --display-name XtremIO-Vol01 --image-id 811fed1f-7d13-4da2-900e-f33e5ceff682 --volume-type XtremIO
+
+# - Create and Copy Image (careful - these take a long time to copy)
+for i in {01..05}
+do
+  echo "cinder create 10 --display-name XtremIO_Vol${i} --image-id 811fed1f-7d13-4da2-900e-f33e5ceff682 --volume-type XtremIO"
+  cinder create 10 --display-name XtremIO_Vol${i} --image-id 811fed1f-7d13-4da2-900e-f33e5ceff682 --volume-type XtremIO &> /dev/null
+done
+cinder list
+...............
+
+# - list the volumes
+root@node-4:~# cinder list
++--------------------------------------+--------+---------------+------+-------------+----------+--------------------------------------+
+|                  ID                  | Status |  Display Name | Size | Volume Type | Bootable |             Attached to              |
++--------------------------------------+--------+---------------+------+-------------+----------+--------------------------------------+
+| 0466c610-6f28-41d7-8f72-b4db5ef4074e | in-use | XtermIO_Vol04 |  10  |   XtremIO   |   true   | 9e7317d1-c976-42fd-a7e4-35d12c26ec62 |
+| 70f4ff10-fc99-4eb7-8f3d-06fca3d2cd63 | in-use | XtermIO_Vol05 |  10  |   XtremIO   |   true   | f803d726-02ec-444a-984f-355276a2b15d |
+| 800c1d09-e836-48cb-a07a-d6a83b36d10c | in-use | XtermIO_Vol01 |  10  |   XtremIO   |   true   | b147e9f5-3d8f-4214-9078-0eec75c34258 |
+| a6c8692b-d66c-4262-b83f-a9d6b123305e | in-use | XtermIO_Vol02 |  10  |   XtremIO   |   true   | dcf1ef4b-dabf-4d91-8557-b33a377eb794 |
+| fb03318b-98c4-4310-ae13-4fbed9b6cb46 | in-use | XtermIO_Vol03 |  10  |   XtremIO   |   true   | 070a9f50-6969-40f4-bf18-2a1462c52b04 |
++--------------------------------------+--------+---------------+------+-------------+----------+--------------------------------------+
+
+# - Show credential use -
+
+---> XtremIO-01 Project
+vietmeik@Skarn (~/xtremio)$ ./echo-creds.sh
+http://10.255.186.6:5000/v2.0
+3f3e67e93ff04a2e9df23b6a7758ad88
+XtremIO-01
+xtremio_01
+xtremio
+vietmeik@Skarn (~/xtremio)$ openstack volume list
+<..empty..>
+
+
+---> Admin Project
+vietmeik@Skarn (~/xtremio)$ ./echo-creds.sh
+http://10.255.186.6:5000/v2.0
+f485ccaf3f02479281d288a3220a22e7
+admin
+admin
+admin
+vietmeik@Skarn (~/xtremio)$ openstack volume list
++--------------------------------------+---------------+--------+------+------------------------------------+
+| ID                                   | Display Name  | Status | Size | Attached to                        |
++--------------------------------------+---------------+--------+------+------------------------------------+
+| 70f4ff10-fc99-4eb7-8f3d-06fca3d2cd63 | XtermIO_Vol05 | in-use |   10 | Attached to Instance2 on /dev/vda  |
+| 0466c610-6f28-41d7-8f72-b4db5ef4074e | XtermIO_Vol04 | in-use |   10 | Attached to Instance1 on /dev/vda  |
+| fb03318b-98c4-4310-ae13-4fbed9b6cb46 | XtermIO_Vol03 | in-use |   10 | Attached to Instance5 on /dev/vda  |
+| a6c8692b-d66c-4262-b83f-a9d6b123305e | XtermIO_Vol02 | in-use |   10 | Attached to Instance4 on /dev/vda  |
+| 800c1d09-e836-48cb-a07a-d6a83b36d10c | XtermIO_Vol01 | in-use |   10 | Attached to Instance3 on /dev/vda  |
++--------------------------------------+---------------+--------+------+------------------------------------+
+
+vietmeik@Skarn (~/xtremio)$ cinder list
++--------------------------------------+--------+---------------+------+-------------+----------+--------------------------------------+
+|                  ID                  | Status |      Name     | Size | Volume Type | Bootable |             Attached to              |
++--------------------------------------+--------+---------------+------+-------------+----------+--------------------------------------+
+| 0466c610-6f28-41d7-8f72-b4db5ef4074e | in-use | XtermIO_Vol04 |  10  |   XtremIO   |   true   | 9e7317d1-c976-42fd-a7e4-35d12c26ec62 |
+| 70f4ff10-fc99-4eb7-8f3d-06fca3d2cd63 | in-use | XtermIO_Vol05 |  10  |   XtremIO   |   true   | f803d726-02ec-444a-984f-355276a2b15d |
+| 800c1d09-e836-48cb-a07a-d6a83b36d10c | in-use | XtermIO_Vol01 |  10  |   XtremIO   |   true   | b147e9f5-3d8f-4214-9078-0eec75c34258 |
+| a6c8692b-d66c-4262-b83f-a9d6b123305e | in-use | XtermIO_Vol02 |  10  |   XtremIO   |   true   | dcf1ef4b-dabf-4d91-8557-b33a377eb794 |
+| fb03318b-98c4-4310-ae13-4fbed9b6cb46 | in-use | XtermIO_Vol03 |  10  |   XtremIO   |   true   | 070a9f50-6969-40f4-bf18-2a1462c52b04 |
++--------------------------------------+--------+---------------+------+-------------+----------+--------------------------------------+
+
+
+###==============================================================###
+### - bash scripts
+###==============================================================###
+# - Parse cinder output for scripts
+cinder list | grep XtremIO
+cinder list | grep XtremIO | awk '{print $2}'
+cinder list | grep XtremIO | awk '$4 == "available" {print $2}'
+cinder list | awk '$10 == "XtremIO" {print $2}'
+cinder list | awk '$10 == "XtremIO" {print $4}'
+cinder list | awk '$4 == "available" && $10 == "XtremIO" {print $2}'
+cinder list | awk '$4 == "downloading" && $10 == "XtremIO" {print $6}' | wc -l
+cinder list | awk '$4 == "downloading" && $10 == "XtremIO" {print $2}' | wc -l
+
+
+# - Create and Copy Image (careful - these take a long time to copy)
+for i in {01..05}
+do
+  echo "cinder create 10 --display-name XtremIO_Vol${i} --image-id 811fed1f-7d13-4da2-900e-f33e5ceff682 --volume-type XtremIO"
+  cinder create 10 --display-name XtremIO_Vol${i} --image-id 811fed1f-7d13-4da2-900e-f33e5ceff682 --volume-type XtremIO &> /dev/null
+done
+cinder list
+
+# - Delete the volumes just created
+for i in {01..05}
+do
+  echo "cinder delete  XtremIO_Vol${i}"
+  cinder delete  XtremIO_Vol${i}
+done
+cinder list
+
+# - Create Instances with these volumes
+count=1
+export $count
+for vol in $(cinder list | awk '$4 == "available" && $10 == "XtremIO" {print $2}')
+	do 
+		echo "nova boot --flavor m1.XtremIO --block-device source=volume,id=$vol,dest=volume,shutdown=remove,bootindex=0 --nic net-id=f9c5a3ef-f600-40a0-9965-a39ff8f6be11 Instance${count}"
+		$count = $count + 1
+		echo $count
+	done
+
+
+
+###==============================================================###
+    Nova and other Instance manipulation
+###==============================================================###
+
+3 Items required for "nova boot"
+	Flavor-ID
+	Volume-ID
+	Net-ID
+
+vietmeik@Skarn (~/xtremio/scripts)$ nova flavor-list
++--------------------------------------+------------+-----------+------+-----------+------+-------+-------------+-----------+
+| ID                                   | Name       | Memory_MB | Disk | Ephemeral | Swap | VCPUs | RXTX_Factor | Is_Public |
++--------------------------------------+------------+-----------+------+-----------+------+-------+-------------+-----------+
+| 1                                    | m1.tiny    | 512       | 1    | 0         |      | 1     | 1.0         | True      |
+| 2                                    | m1.small   | 2048      | 20   | 0         |      | 1     | 1.0         | True      |
+| 2009864b-8d65-4066-b512-aa83b3f1c524 | m1.XtremIO | 512       | 10   | 0         |      | 1     | 1.0         | True      |
+| 3                                    | m1.medium  | 4096      | 40   | 0         |      | 2     | 1.0         | True      |
+| 4                                    | m1.large   | 8192      | 80   | 0         |      | 4     | 1.0         | True      |
+| 5                                    | m1.xlarge  | 16384     | 160  | 0         |      | 8     | 1.0         | True      |
+| 50a1e5b5-7703-4936-b4c4-16fd48f22d42 | m1.micro   | 64        | 0    | 0         |      | 1     | 1.0         | True      |
++--------------------------------------+------------+-----------+------+-----------+------+-------+-------------+-----------+
+
+vietmeik@Skarn (~/xtremio/scripts)$ cinder list
++--------------------------------------+-----------+--------------+------+-------------+----------+-------------+
+|                  ID                  |   Status  |     Name     | Size | Volume Type | Bootable | Attached to |
++--------------------------------------+-----------+--------------+------+-------------+----------+-------------+
+| 090de712-4e90-4ac8-82a7-221e0606120f | available | XtermIO_Vol5 |  10  |   XtremIO   |   true   |             |
+| 3b7101da-ef92-46e3-be01-7967f38ec4f2 | available | XtermIO_Vol4 |  10  |   XtremIO   |   true   |             |
+| 46df4f34-9297-438c-9785-baf43719857e | available | XtermIO_Vol2 |  10  |   XtremIO   |   true   |             |
+| 7adff5f9-01d1-42e3-ba50-be9ea2052397 | available | XtermIO_Vol1 |  10  |   XtremIO   |   true   |             |
+| 83bb49f7-cc5f-45d2-a226-d36d02a8ed3f | available | XtermIO_Vol3 |  10  |   XtremIO   |   true   |             |
++--------------------------------------+-----------+--------------+------+-------------+----------+-------------+
+
+root@node-3:~# neutron net-list
++--------------------------------------+----------------+------------------------------------------------------+
+| id                                   | name           | subnets                                              |
++--------------------------------------+----------------+------------------------------------------------------+
+| f9c5a3ef-f600-40a0-9965-a39ff8f6be11 | net04          | 2015c563-e082-486d-8436-8971b328d195 192.168.63.0/24 |
+| 006866ce-7ee4-4c46-85f1-ec9560835dc5 | net04_ext      | 3045001e-e2b2-4608-9b3e-24ee915ea853 10.255.186.0/26 |
+| 7224a6c5-ff91-459f-9ee9-c87df213b265 | XtremIO-01_int | 9555056a-70ee-447f-8a23-70466c68d502 192.168.64.0/24 |
++--------------------------------------+----------------+------------------------------------------------------+
+
+# - Now you can craft the nova boot command
+
+---> Created in Admin Project
+root@node-4:~/temp# nova boot --flavor m1.XtremIO --block-device source=volume,id=7e22da6f-f172-42c5-bb80-22b6c0eae09d,dest=volume,shutdown=remove,bootindex=0 --nic net-id=f9c5a3ef-f600-40a0-9965-a39ff8f6be11 Instance01
+
+---> Created in XtremIO-01 Project
+root@node-4:~/temp# nova boot --flavor m1.XtremIO --block-device source=volume,id=7adff5f9-01d1-42e3-ba50-be9ea2052397,dest=volume,shutdown=remove,bootindex=0 --nic net-id=7224a6c5-ff91-459f-9ee9-c87df213b265 Server-01
+
+root@node-4:~/temp# nova list
++--------------------------------------+------------+--------+------------+-------------+---------------------+
+| ID                                   | Name       | Status | Task State | Power State | Networks            |
++--------------------------------------+------------+--------+------------+-------------+---------------------+
+| 0f1e0cb1-83a1-465c-b1b8-c7c93e5625f7 | Instance01 | ACTIVE | -          | Running     | net04=192.168.63.22 |
++--------------------------------------+------------+--------+------------+-------------+---------------------+
+
+--->
+### Attach empty Cinder volume to instance and use it for data ###
+--->
+
+vietmeik@Skarn (~/xtremio/scripts)$ openstack volume list
++--------------------------------------+----------------+-----------+------+------------------------------------+
+| ID                                   | Display Name   | Status    | Size | Attached to                        |
++--------------------------------------+----------------+-----------+------+------------------------------------+
+| dc3171c7-0c59-419c-81a4-e853e1206ad3 | XtremIO_Vol110 | available |   10 |                                    |
+| 7588e314-a622-4b61-9732-ed214ec3c37d | XtremIO_Vol109 | available |   10 |                                    |
+| 4ab8352b-1c39-4bfc-8163-39af5298f1a5 | XtremIO_Vol108 | available |   10 |                                    |
+| acc3e24f-ea9b-48de-831c-78e4dd431838 | XtremIO_Vol107 | available |   10 |                                    |
+| 7f94add0-3707-4f26-8db2-3ae3ab062125 | XtremIO_Vol106 | available |   10 |                                    |
+| d4b8f15d-bb46-47cc-aa4f-e75f33e6e2c5 | XtremIO_Vol105 | available |   10 |                                    |
+| 7752ebde-643d-4872-b15f-2f13d2d0870b | XtremIO_Vol104 | available |   10 |                                    |
+| 04bb6df8-a4c5-4525-b9fa-1fc07271bfa3 | XtremIO_Vol103 | available |   10 |                                    |
+| c5734bd0-7529-4762-9104-24ad4f4d1cfb | XtremIO_Vol102 | available |   10 |                                    |
+| f98ea8c8-e1d7-4568-97b2-197afb8e567b | XtremIO_Vol101 | available |   10 |                                    |
+| 8e90c7e4-1095-496e-810c-405b9f8ff5b0 | XtremIO_Vol100 | available |   10 |                                    |
+| 70f4ff10-fc99-4eb7-8f3d-06fca3d2cd63 | XtermIO_Vol05  | in-use    |   10 | Attached to Instance2 on /dev/vda  |
+| 0466c610-6f28-41d7-8f72-b4db5ef4074e | XtermIO_Vol04  | in-use    |   10 | Attached to Instance1 on /dev/vda  |
+| fb03318b-98c4-4310-ae13-4fbed9b6cb46 | XtermIO_Vol03  | in-use    |   10 | Attached to Instance5 on /dev/vda  |
+| a6c8692b-d66c-4262-b83f-a9d6b123305e | XtermIO_Vol02  | in-use    |   10 | Attached to Instance4 on /dev/vda  |
+| 800c1d09-e836-48cb-a07a-d6a83b36d10c | XtermIO_Vol01  | in-use    |   10 | Attached to Instance3 on /dev/vda  |
++--------------------------------------+----------------+-----------+------+------------------------------------+
+
+
+vietmeik@Skarn (~/xtremio/scripts)$ nova volume-attach 9e7317d1-c976-42fd-a7e4-35d12c26ec62 8e90c7e4-1095-496e-810c-405b9f8ff5b0 /dev/vdb
++----------+--------------------------------------+
+| Property | Value                                |
++----------+--------------------------------------+
+| device   | /dev/vdb                             |
+| id       | 8e90c7e4-1095-496e-810c-405b9f8ff5b0 |
+| serverId | 9e7317d1-c976-42fd-a7e4-35d12c26ec62 |
+| volumeId | 8e90c7e4-1095-496e-810c-405b9f8ff5b0 |
++----------+--------------------------------------+
+
+vietmeik@Skarn (~/xtremio/scripts)$ openstack volume list
++--------------------------------------+----------------+-----------+------+------------------------------------+
+| ID                                   | Display Name   | Status    | Size | Attached to                        |
++--------------------------------------+----------------+-----------+------+------------------------------------+
+| dc3171c7-0c59-419c-81a4-e853e1206ad3 | XtremIO_Vol110 | available |   10 |                                    |
+| 7588e314-a622-4b61-9732-ed214ec3c37d | XtremIO_Vol109 | available |   10 |                                    |
+| 4ab8352b-1c39-4bfc-8163-39af5298f1a5 | XtremIO_Vol108 | available |   10 |                                    |
+| acc3e24f-ea9b-48de-831c-78e4dd431838 | XtremIO_Vol107 | available |   10 |                                    |
+| 7f94add0-3707-4f26-8db2-3ae3ab062125 | XtremIO_Vol106 | available |   10 |                                    |
+| d4b8f15d-bb46-47cc-aa4f-e75f33e6e2c5 | XtremIO_Vol105 | available |   10 |                                    |
+| 7752ebde-643d-4872-b15f-2f13d2d0870b | XtremIO_Vol104 | available |   10 |                                    |
+| 04bb6df8-a4c5-4525-b9fa-1fc07271bfa3 | XtremIO_Vol103 | available |   10 |                                    |
+| c5734bd0-7529-4762-9104-24ad4f4d1cfb | XtremIO_Vol102 | available |   10 |                                    |
+| f98ea8c8-e1d7-4568-97b2-197afb8e567b | XtremIO_Vol101 | available |   10 |                                    |
+| 8e90c7e4-1095-496e-810c-405b9f8ff5b0 | XtremIO_Vol100 | in-use    |   10 | Attached to Instance1 on /dev/vdb  |
+| 70f4ff10-fc99-4eb7-8f3d-06fca3d2cd63 | XtermIO_Vol05  | in-use    |   10 | Attached to Instance2 on /dev/vda  |
+| 0466c610-6f28-41d7-8f72-b4db5ef4074e | XtermIO_Vol04  | in-use    |   10 | Attached to Instance1 on /dev/vda  |
+| fb03318b-98c4-4310-ae13-4fbed9b6cb46 | XtermIO_Vol03  | in-use    |   10 | Attached to Instance5 on /dev/vda  |
+| a6c8692b-d66c-4262-b83f-a9d6b123305e | XtermIO_Vol02  | in-use    |   10 | Attached to Instance4 on /dev/vda  |
+| 800c1d09-e836-48cb-a07a-d6a83b36d10c | XtermIO_Vol01  | in-use    |   10 | Attached to Instance3 on /dev/vda  |
++--------------------------------------+----------------+-----------+------+------------------------------------+
+
+
+## In instance:
+root@instance1 ~]# fdisk -l
+
+Disk /dev/vda: 10.7 GB, 10737418240 bytes, 20971520 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk label type: dos
+Disk identifier: 0x000123f5
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/vda1   *        2048    20964824    10481388+  83  Linux
+
+Disk /dev/vdb: 10.7 GB, 10737418240 bytes, 20971520 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+
+root@instance1 ~]# parted -a optimal --script /dev/vdb -- mklabel gpt
+[root@instance1 ~]# parted -a optimal --script /dev/vdb -- mkpart primary 0% 100%
+[root@instance1 ~]# mkfs -t ext3 /dev/vdb1
+mke2fs 1.42.9 (28-Dec-2013)
+Filesystem label=
+OS type: Linux
+Block size=4096 (log=2)
+Fragment size=4096 (log=2)
+Stride=0 blocks, Stripe width=0 blocks
+655360 inodes, 2620928 blocks
+131046 blocks (5.00%) reserved for the super user
+First data block=0
+Maximum filesystem blocks=2684354560
+80 block groups
+32768 blocks per group, 32768 fragments per group
+8192 inodes per group
+Superblock backups stored on blocks:
+	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632
+
+Allocating group tables: done
+Writing inode tables: done
+Creating journal (32768 blocks): done
+Writing superblocks and filesystem accounting information: done
+
+[root@instance1 ~]# mount /dev/vdb1 /mnt
+[root@instance1 ~]# df -kh
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/vda1        10G  934M  9.1G  10% /
+devtmpfs        227M     0  227M   0% /dev
+tmpfs           245M     0  245M   0% /dev/shm
+tmpfs           245M  8.4M  237M   4% /run
+tmpfs           245M     0  245M   0% /sys/fs/cgroup
+tmpfs            49M     0   49M   0% /run/user/0
+/dev/vdb1       9.8G   23M  9.2G   1% /mnt
+
+--> Copy over some files to list in directory
+--> 
+
+
+
+
+[root@instance1 mnt]# pwd
+/mnt
+[root@instance1 mnt]# ll
+total 1625868
+-rw-r--r--. 1 root root 735248384 Feb 23 17:50 CentOS-6-x86_64-GenericCloud-1602.qcow2
+-rw-r--r--. 1 root root 914685952 Feb 23 17:51 CentOS-7-x86_64-GenericCloud-1602.qcow2
+-rw-r--r--. 1 root root  13287936 May  7  2015 cirros-0.3.4-x86_64-disk.img
+drwx------. 2 root root     16384 Mar 29 23:37 lost+found
+
+--> Unmount - detach
+[root@instance1 mnt]# cd
+[root@instance1 ~]# umount /mnt
+[root@instance1 ~]# df -kh
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/vda1        10G  936M  9.1G  10% /
+devtmpfs        227M     0  227M   0% /dev
+tmpfs           245M     0  245M   0% /dev/shm
+tmpfs           245M  8.4M  237M   4% /run
+tmpfs           245M     0  245M   0% /sys/fs/cgroup
+tmpfs            49M     0   49M   0% /run/user/0
+
+vietmeik@Skarn (~/xtremio/scripts)$ nova volume-detach 9e7317d1-c976-42fd-a7e4-35d12c26ec62 8e90c7e4-1095-496e-810c-405b9f8ff5b0
+vietmeik@Skarn (~/xtremio/scripts)$ openstack volume list
++--------------------------------------+----------------+-----------+------+------------------------------------+
+| ID                                   | Display Name   | Status    | Size | Attached to                        |
++--------------------------------------+----------------+-----------+------+------------------------------------+
+| dc3171c7-0c59-419c-81a4-e853e1206ad3 | XtremIO_Vol110 | available |   10 |                                    |
+| 7588e314-a622-4b61-9732-ed214ec3c37d | XtremIO_Vol109 | available |   10 |                                    |
+| 4ab8352b-1c39-4bfc-8163-39af5298f1a5 | XtremIO_Vol108 | available |   10 |                                    |
+| acc3e24f-ea9b-48de-831c-78e4dd431838 | XtremIO_Vol107 | available |   10 |                                    |
+| 7f94add0-3707-4f26-8db2-3ae3ab062125 | XtremIO_Vol106 | available |   10 |                                    |
+| d4b8f15d-bb46-47cc-aa4f-e75f33e6e2c5 | XtremIO_Vol105 | available |   10 |                                    |
+| 7752ebde-643d-4872-b15f-2f13d2d0870b | XtremIO_Vol104 | available |   10 |                                    |
+| 04bb6df8-a4c5-4525-b9fa-1fc07271bfa3 | XtremIO_Vol103 | available |   10 |                                    |
+| c5734bd0-7529-4762-9104-24ad4f4d1cfb | XtremIO_Vol102 | available |   10 |                                    |
+| f98ea8c8-e1d7-4568-97b2-197afb8e567b | XtremIO_Vol101 | available |   10 |                                    |
+| 8e90c7e4-1095-496e-810c-405b9f8ff5b0 | XtremIO_Vol100 | available |   10 |                                    |
+| 70f4ff10-fc99-4eb7-8f3d-06fca3d2cd63 | XtermIO_Vol05  | in-use    |   10 | Attached to Instance2 on /dev/vda  |
+| 0466c610-6f28-41d7-8f72-b4db5ef4074e | XtermIO_Vol04  | in-use    |   10 | Attached to Instance1 on /dev/vda  |
+| fb03318b-98c4-4310-ae13-4fbed9b6cb46 | XtermIO_Vol03  | in-use    |   10 | Attached to Instance5 on /dev/vda  |
+| a6c8692b-d66c-4262-b83f-a9d6b123305e | XtermIO_Vol02  | in-use    |   10 | Attached to Instance4 on /dev/vda  |
+| 800c1d09-e836-48cb-a07a-d6a83b36d10c | XtermIO_Vol01  | in-use    |   10 | Attached to Instance3 on /dev/vda  |
++--------------------------------------+----------------+-----------+------+------------------------------------+
+
+
+###==============================================================###
+### - Snapshot manipulation
+###==============================================================###
+
+vietmeik@Skarn (~/xtremio/scripts)$ cinder snapshot-create --name XtremIO_Snap01 --description "Test" XtremIO_Vol100
++-------------+--------------------------------------+
+|   Property  |                Value                 |
++-------------+--------------------------------------+
+|  created_at |      2016-03-29T23:49:34.227617      |
+| description |                 Test                 |
+|      id     | 7c79fc25-f350-46db-bda4-e129b80dcb2b |
+|   metadata  |                  {}                  |
+|     name    |            XtremIO_Snap01            |
+|     size    |                  10                  |
+|    status   |               creating               |
+|  volume_id  | 8e90c7e4-1095-496e-810c-405b9f8ff5b0 |
++-------------+--------------------------------------+
+
+
+## Convert it to a vol and attach:
+cinder create 10 --display-name VolSnapTest01 --snapshot-id 7c79fc25-f350-46db-bda4-e129b80dcb2b
+nova volume-attach 9e7317d1-c976-42fd-a7e4-35d12c26ec62 298ee260-4a13-4cb7-ae3d-955ea191d304 /dev/vdb
+
+[root@instance1 ~]# mount /dev/vdb1 /mnt
+[root@instance1 ~]# ls /mnt
+CentOS-6-x86_64-GenericCloud-1602.qcow2  cirros-0.3.4-x86_64-disk.img
+CentOS-7-x86_64-GenericCloud-1602.qcow2  lost+found
+
+
+vietmeik@Skarn (~/xtremio/scripts)$ openstack snapshot list
++--------------------------------------+----------------+-------------+-----------+------+
+| ID                                   | Name           | Description | Status    | Size |
++--------------------------------------+----------------+-------------+-----------+------+
+| 63f05be2-30d7-4d33-adaf-f3fc889fd839 | XtremIO_Snap02 | Test        | available |   10 |
+| 7c79fc25-f350-46db-bda4-e129b80dcb2b | XtremIO_Snap01 | Test        | available |   10 |
++--------------------------------------+----------------+-------------+-----------+------+
+vietmeik@Skarn (~/xtremio/scripts)$ openstack snapshot delete 63f05be2-30d7-4d33-adaf-f3fc889fd839
+vietmeik@Skarn (~/xtremio/scripts)$ openstack snapshot delete 7c79fc25-f350-46db-bda4-e129b80dcb2b
+vietmeik@Skarn (~/xtremio/scripts)$
+
+
+###==============================================================###
+    Neutron 
+###==============================================================###
+
+vietmeik@Skarn (~/sd/projects/atc/emc)$ ecred
+http://10.255.186.6:5000/v2.0
+3f3e67e93ff04a2e9df23b6a7758ad88
+XtremIO-01
+xtremio_01
+xtremio
+
+
+# - Create basic security group to allow standard services - needed to get floating IP working
+neutron security-group-create core_services-sg --description "allow web, ssh, and ping"
+neutron security-group-rule-create --direction ingress --ethertype ipv4 --protocol tcp --port-range-min 22 --port-range-max 22 --remote-ip-prefix 0.0.0.0/0 core_services-sg
+neutron security-group-rule-create --direction ingress --ethertype ipv4 --protocol tcp --port-range-min 80 --port-range-max 80 --remote-ip-prefix 0.0.0.0/0 core_services-sg
+neutron security-group-rule-create --direction ingress --ethertype ipv4 --protocol tcp --port-range-min 443 --port-range-max 443 --remote-ip-prefix 0.0.0.0/0 core_services-sg
+neutron security-group-rule-create --direction ingress --ethertype ipv4 --protocol icmp --remote-ip-prefix 0.0.0.0/0 core_services-sg
+
+vietmeik@Skarn (~/sd/projects/atc/emc)$ neutron security-group-list
++--------------------------------------+------------------+----------------------------------------------------------------------+
+| id                                   | name             | security_group_rules                                                 |
++--------------------------------------+------------------+----------------------------------------------------------------------+
+| 2c4479ba-456d-4c41-bd48-eafb16570155 | core_services-sg | egress, IPv4                                                         |
+|                                      |                  | egress, IPv6                                                         |
+|                                      |                  | ingress, IPv4, 22/tcp, remote_ip_prefix: 0.0.0.0/0                   |
+|                                      |                  | ingress, IPv4, 443/tcp, remote_ip_prefix: 0.0.0.0/0                  |
+|                                      |                  | ingress, IPv4, 80/tcp, remote_ip_prefix: 0.0.0.0/0                   |
+|                                      |                  | ingress, IPv4, icmp, remote_ip_prefix: 0.0.0.0/0                     |
+| 78929d9b-34a4-42bb-a70d-5540dc6501a0 | default          | egress, IPv4                                                         |
+|                                      |                  | egress, IPv6                                                         |
+|                                      |                  | ingress, IPv4, remote_group_id: 78929d9b-34a4-42bb-a70d-5540dc6501a0 |
+|                                      |                  | ingress, IPv6, remote_group_id: 78929d9b-34a4-42bb-a70d-5540dc6501a0 |
++--------------------------------------+------------------+----------------------------------------------------------------------+
+vietmeik@Skarn (~/sd/projects/atc/emc)$ nova list
++--------------------------------------+-----------+--------+------------+-------------+-----------------------------+
+| ID                                   | Name      | Status | Task State | Power State | Networks                    |
++--------------------------------------+-----------+--------+------------+-------------+-----------------------------+
+| ca584960-b5b4-4da0-a05b-9cf660aae245 | Server-01 | ACTIVE | -          | Running     | XtremIO-01_int=192.168.64.5 |
++--------------------------------------+-----------+--------+------------+-------------+-----------------------------+
+
+# Add sec-group to Instance:  nova add-secgroup <InstanceID> <SG-ID>
+vietmeik@Skarn (~/sd/projects/atc/emc)$ nova add-secgroup ca584960-b5b4-4da0-a05b-9cf660aae245 2c4479ba-456d-4c41-bd48-eafb16570155
+
+
+
+### - Floating IPs - contextual based on Project - ###
+
+### - With Admin creds
+
+# - Create some
+vietmeik@Skarn (~/xtremio/scripts)$ neutron floatingip-create Net04_ext
+Created a new floatingip:
++---------------------+--------------------------------------+
++---------------------+--------------------------------------+
+vietmeik@Skarn (~/xtremio/scripts)$ neutron floatingip-create Net04_ext
+Created a new floatingip:
++---------------------+--------------------------------------+
++---------------------+--------------------------------------+
+vietmeik@Skarn (~/xtremio/scripts)$ neutron floatingip-create Net04_ext
+Created a new floatingip:
++---------------------+--------------------------------------+
++---------------------+--------------------------------------+
+
+# - Associate them
+neutron floatingip-associate 
+vietmeik@Skarn (~/xtremio/scripts)$ neutron floatingip-associate 66342c56-3d52-41fa-abd8-b02d92bdc29e a8a2b3ba-2f3a-46fe-8a3c-7dbbf613b4bc
+Associated floating IP 66342c56-3d52-41fa-abd8-b02d92bdc29e
+
+vietmeik@Skarn (~/xtremio/scripts)$ neutron floatingip-associate e5e80891-250e-4163-a108-3917fbf32dca a0f33827-de3f-436d-9ace-2d866b8a2c22
+Associated floating IP e5e80891-250e-4163-a108-3917fbf32dca
+
+vietmeik@Skarn (~/xtremio/scripts)$ neutron floatingip-associate 622a40be-511e-4317-87c1-2e3b98aaa0f3 87d9788d-0e39-454a-9bbc-85e623a01f34
+Associated floating IP 622a40be-511e-4317-87c1-2e3b98aaa0f3
+
+# - We see them mapped and can now ping/SSH to an Instance:
+vietmeik@Skarn (~/xtremio/scripts)$ neutron floatingip-list
++--------------------------------------+------------------+---------------------+--------------------------------------+
+| id                                   | fixed_ip_address | floating_ip_address | port_id                              |
++--------------------------------------+------------------+---------------------+--------------------------------------+
+| 5789e44b-045a-4306-b58f-e785e8ea0314 |                  | 10.255.186.34       |                                      |
+| 622a40be-511e-4317-87c1-2e3b98aaa0f3 | 192.168.63.27    | 10.255.186.31       | 87d9788d-0e39-454a-9bbc-85e623a01f34 |
+| 66342c56-3d52-41fa-abd8-b02d92bdc29e | 192.168.63.25    | 10.255.186.32       | a8a2b3ba-2f3a-46fe-8a3c-7dbbf613b4bc |
+| b1593980-ed82-459e-ac17-7aeaddbb1abd | 192.168.63.24    | 10.255.186.30       | bd2f5860-d8e6-4d50-be7e-600a8140c709 |
+| e5e80891-250e-4163-a108-3917fbf32dca | 192.168.63.26    | 10.255.186.33       | a0f33827-de3f-436d-9ace-2d866b8a2c22 |
+| e9412ac0-bff0-4524-a4b5-4b8395e09c86 | 192.168.63.23    | 10.255.186.29       | 4761c448-5925-41cc-b195-b9cb58c7160d |
++--------------------------------------+------------------+---------------------+--------------------------------------+
+
+# - If you can't - it is likely the Security Group (see above) need to assign it to the instance:
+vietmeik@Skarn (~/xtremio)$ ping 10.255.186.31
+PING 10.255.186.31 (10.255.186.31): 56 data bytes
+Request timeout for icmp_seq 0
+Request timeout for icmp_seq 1
+Request timeout for icmp_seq 2
+
+
+vietmeik@Skarn (~/xtremio)$ ./echo-creds.sh
+http://10.255.186.6:5000/v2.0
+3f3e67e93ff04a2e9df23b6a7758ad88
+XtremIO-01
+xtremio_01
+xtremio
+
+vietmeik@Skarn (~/xtremio)$ neutron floatingip-list
+<empty>
+
+# - Create 5
+vietmeik@Skarn (~/xtremio)$ neutron floatingip-create Net04_ext
+vietmeik@Skarn (~/xtremio)$ neutron floatingip-create Net04_ext
+vietmeik@Skarn (~/xtremio)$ neutron floatingip-create Net04_ext
+vietmeik@Skarn (~/xtremio)$ neutron floatingip-create Net04_ext
+vietmeik@Skarn (~/xtremio)$ neutron floatingip-create Net04_ext
+
+# - Get info to map floating IP
+vietmeik@Skarn (~/xtremio)$ neutron floatingip-list
+
+vietmeik@Skarn (~/sd/projects/atc/emc)$ neutron port-list
++--------------------------------------+------+-------------------+-------------------------------------------------------------------------------------+
+| id                                   | name | mac_address       | fixed_ips                                                                           |
++--------------------------------------+------+-------------------+-------------------------------------------------------------------------------------+
+| 26af4cbf-3e63-4b06-b69b-3cd2818b9e79 |      | fa:16:3e:eb:b5:7f | {"subnet_id": "9555056a-70ee-447f-8a23-70466c68d502", "ip_address": "192.168.64.9"} |
+| 48e644ac-c2c4-4708-9ba5-7ab6387c1d75 |      | fa:16:3e:de:d1:8d | {"subnet_id": "9555056a-70ee-447f-8a23-70466c68d502", "ip_address": "192.168.64.5"} |
+| 4e62483d-ef03-49fb-aa50-993ef878465f |      | fa:16:3e:e4:7d:85 | {"subnet_id": "9555056a-70ee-447f-8a23-70466c68d502", "ip_address": "192.168.64.8"} |
+| 749b666b-347c-48c5-ab49-36bccb837158 |      | fa:16:3e:85:84:2c | {"subnet_id": "9555056a-70ee-447f-8a23-70466c68d502", "ip_address": "192.168.64.7"} |
+| 9954e9ae-b25e-4518-bbc5-8c828e4d91cf |      | fa:16:3e:1f:d6:86 | {"subnet_id": "9555056a-70ee-447f-8a23-70466c68d502", "ip_address": "192.168.64.1"} |
+| a30a5e9f-3e9d-4948-b462-c9b7cf5e8f01 |      | fa:16:3e:67:8c:dc | {"subnet_id": "9555056a-70ee-447f-8a23-70466c68d502", "ip_address": "192.168.64.4"} |
+| d0b30b1d-658a-4bf0-bec1-7cd131ca610e |      | fa:16:3e:dd:13:f8 | {"subnet_id": "9555056a-70ee-447f-8a23-70466c68d502", "ip_address": "192.168.64.6"} |
+| d91dc146-27fe-4845-bd3b-0ea950de7585 |      | fa:16:3e:9f:ab:17 | {"subnet_id": "9555056a-70ee-447f-8a23-70466c68d502", "ip_address": "192.168.64.3"} |
++--------------------------------------+------+-------------------+-------------------------------------------------------------------------------------+
+
+vietmeik@Skarn (~/sd/projects/atc/emc)$ neutron floatingip-list
++--------------------------------------+------------------+---------------------+--------------------------------------+
+| id                                   | fixed_ip_address | floating_ip_address | port_id                              |
++--------------------------------------+------------------+---------------------+--------------------------------------+
+| 4b10b04c-65cd-48bf-ad99-2d34d1e90dc7 |                  | 10.255.186.39       |                                      |
+| 9fb2234f-6efd-4a09-8bf9-145b5eb246bf |                  | 10.255.186.40       |                                      |
+| a397d3b0-54ec-42ff-8694-1572dc1b098c | 192.168.64.5     | 10.255.186.37       | 48e644ac-c2c4-4708-9ba5-7ab6387c1d75 |
+| ca1ef889-1472-416e-8ba7-fbf55d22d84e |                  | 10.255.186.36       |                                      |
+| eb38b566-9511-4071-a59a-524c1e38e7f4 |                  | 10.255.186.38       |                                      |
++--------------------------------------+------------------+---------------------+--------------------------------------+
+
+vietmeik@Skarn (~/sd/projects/atc/emc)$ nova list
++--------------------------------------+-----------+--------+------------+-------------+--------------------------------------------+
+| ID                                   | Name      | Status | Task State | Power State | Networks                                   |
++--------------------------------------+-----------+--------+------------+-------------+--------------------------------------------+
+| ca584960-b5b4-4da0-a05b-9cf660aae245 | Server-01 | ACTIVE | -          | Running     | XtremIO-01_int=192.168.64.5                |
+| ab74636b-1de2-408b-b578-17c1e7e0e6c6 | Server-02 | ACTIVE | -          | Running     | XtremIO-01_int=192.168.64.6                |
+| 0d8f2465-fccb-4c34-a8cb-292aedf3e2d8 | Server-03 | ACTIVE | -          | Running     | XtremIO-01_int=192.168.64.7                |
+| f7d7d785-abad-4dff-9264-1be241b841a4 | Server-04 | ACTIVE | -          | Running     | XtremIO-01_int=192.168.64.8                |
+| bcf4c503-2707-4dc7-9fba-7eabbaf0a9a6 | Server-05 | ACTIVE | -          | Running     | XtremIO-01_int=192.168.64.9                |
++--------------------------------------+-----------+--------+------------+-------------+--------------------------------------------+
+
+# - Create the Mapping
+Syntax:  neutron floatingip-asociate <floatingIP> <PortID>
+
+ vietmeik@Skarn (~/sd/projects/atc/emc)$ neutron floatingip-associate a397d3b0-54ec-42ff-8694-1572dc1b098c 48e644ac-c2c4-4708-9ba5-7ab6387c1d75
+ vietmeik@Skarn (~/sd/projects/atc/emc)$ neutron floatingip-associate ca1ef889-1472-416e-8ba7-fbf55d22d84e d0b30b1d-658a-4bf0-bec1-7cd131ca610e
+ vietmeik@Skarn (~/sd/projects/atc/emc)$ neutron floatingip-associate eb38b566-9511-4071-a59a-524c1e38e7f4 749b666b-347c-48c5-ab49-36bccb837158
+ vietmeik@Skarn (~/sd/projects/atc/emc)$ neutron floatingip-associate 4b10b04c-65cd-48bf-ad99-2d34d1e90dc7 4e62483d-ef03-49fb-aa50-993ef878465f
+ vietmeik@Skarn (~/sd/projects/atc/emc)$ neutron floatingip-associate 9fb2234f-6efd-4a09-8bf9-145b5eb246bf 26af4cbf-3e63-4b06-b69b-3cd2818b9e79
+
+# - Done
+vietmeik@Skarn (~/sd/projects/atc/emc)$ neutron floatingip-list
++--------------------------------------+------------------+---------------------+--------------------------------------+
+| id                                   | fixed_ip_address | floating_ip_address | port_id                              |
++--------------------------------------+------------------+---------------------+--------------------------------------+
+| 4b10b04c-65cd-48bf-ad99-2d34d1e90dc7 | 192.168.64.8     | 10.255.186.39       | 4e62483d-ef03-49fb-aa50-993ef878465f |
+| 9fb2234f-6efd-4a09-8bf9-145b5eb246bf | 192.168.64.9     | 10.255.186.40       | 26af4cbf-3e63-4b06-b69b-3cd2818b9e79 |
+| a397d3b0-54ec-42ff-8694-1572dc1b098c | 192.168.64.5     | 10.255.186.37       | 48e644ac-c2c4-4708-9ba5-7ab6387c1d75 |
+| ca1ef889-1472-416e-8ba7-fbf55d22d84e | 192.168.64.6     | 10.255.186.36       | d0b30b1d-658a-4bf0-bec1-7cd131ca610e |
+| eb38b566-9511-4071-a59a-524c1e38e7f4 | 192.168.64.7     | 10.255.186.38       | 749b666b-347c-48c5-ab49-36bccb837158 |
++--------------------------------------+------------------+---------------------+--------------------------------------+
+
+# - Verify -
+
+vietmeik@Skarn (~/sd/projects/atc/emc)$ traceroute 10.255.186.36
+traceroute to 10.255.186.36 (10.255.186.36), 64 hops max, 52 byte packets
+ 1  10.255.255.253 (10.255.255.253)  49.644 ms *  49.870 ms
+ 2  10.255.186.36 (10.255.186.36)  49.972 ms  49.326 ms  48.830 ms
+ 3  * * *
+
+
+vietmeik@Skarn (~/sd/projects/atc/emc)$ ping 10.255.186.39
+PING 10.255.186.39 (10.255.186.39): 56 data bytes
+Request timeout for icmp_seq 0
+64 bytes from 10.255.186.39: icmp_seq=1 ttl=62 time=50.637 ms
+64 bytes from 10.255.186.39: icmp_seq=2 ttl=62 time=49.572 ms
+
+vietmeik@Skarn (~/sd/projects/atc/emc)$ ping 10.255.186.40
+PING 10.255.186.40 (10.255.186.40): 56 data bytes
+Request timeout for icmp_seq 0
+64 bytes from 10.255.186.40: icmp_seq=1 ttl=62 time=50.236 ms
+64 bytes from 10.255.186.40: icmp_seq=2 ttl=62 time=49.732 ms
+
+vietmeik@Skarn (~/sd/projects/atc/emc)$ ping 10.255.186.37
+PING 10.255.186.37 (10.255.186.37): 56 data bytes
+64 bytes from 10.255.186.37: icmp_seq=0 ttl=62 time=52.355 ms
+64 bytes from 10.255.186.37: icmp_seq=1 ttl=62 time=51.671 ms
+
+vietmeik@Skarn (~/sd/projects/atc/emc)$ ping 10.255.186.38
+PING 10.255.186.38 (10.255.186.38): 56 data bytes
+Request timeout for icmp_seq 0
+64 bytes from 10.255.186.38: icmp_seq=1 ttl=62 time=52.727 ms
+64 bytes from 10.255.186.38: icmp_seq=2 ttl=62 time=52.145 ms
+
+vietmeik@Skarn (~/sd/projects/atc/emc)$ ping 10.255.186.36
+PING 10.255.186.36 (10.255.186.36): 56 data bytes
+Request timeout for icmp_seq 0
+64 bytes from 10.255.186.36: icmp_seq=1 ttl=62 time=50.296 ms
+64 bytes from 10.255.186.36: icmp_seq=2 ttl=62 time=49.686 ms
+
+
+### - Switch to admin
+vietmeik@Skarn (~/xtremio)$ ./echo-creds.sh
+http://10.255.186.6:5000/v2.0
+f485ccaf3f02479281d288a3220a22e7
+admin
+karlv
+n0mad1c
+
+vietmeik@Skarn (~/sd/projects/atc/emc)$ neutron floatingip-list
++--------------------------------------+------------------+---------------------+--------------------------------------+
+| id                                   | fixed_ip_address | floating_ip_address | port_id                              |
++--------------------------------------+------------------+---------------------+--------------------------------------+
+| 4b10b04c-65cd-48bf-ad99-2d34d1e90dc7 | 192.168.64.8     | 10.255.186.39       | 4e62483d-ef03-49fb-aa50-993ef878465f |
+| 5789e44b-045a-4306-b58f-e785e8ea0314 |                  | 10.255.186.34       |                                      |
+| 622a40be-511e-4317-87c1-2e3b98aaa0f3 | 192.168.63.27    | 10.255.186.31       | 87d9788d-0e39-454a-9bbc-85e623a01f34 |
+| 66342c56-3d52-41fa-abd8-b02d92bdc29e | 192.168.63.25    | 10.255.186.32       | a8a2b3ba-2f3a-46fe-8a3c-7dbbf613b4bc |
+| 9fb2234f-6efd-4a09-8bf9-145b5eb246bf | 192.168.64.9     | 10.255.186.40       | 26af4cbf-3e63-4b06-b69b-3cd2818b9e79 |
+| a397d3b0-54ec-42ff-8694-1572dc1b098c | 192.168.64.5     | 10.255.186.37       | 48e644ac-c2c4-4708-9ba5-7ab6387c1d75 |
+| b1593980-ed82-459e-ac17-7aeaddbb1abd | 192.168.63.24    | 10.255.186.30       | bd2f5860-d8e6-4d50-be7e-600a8140c709 |
+| ca1ef889-1472-416e-8ba7-fbf55d22d84e | 192.168.64.6     | 10.255.186.36       | d0b30b1d-658a-4bf0-bec1-7cd131ca610e |
+| e5e80891-250e-4163-a108-3917fbf32dca | 192.168.63.26    | 10.255.186.33       | a0f33827-de3f-436d-9ace-2d866b8a2c22 |
+| e9412ac0-bff0-4524-a4b5-4b8395e09c86 | 192.168.63.23    | 10.255.186.29       | 4761c448-5925-41cc-b195-b9cb58c7160d |
+| eb38b566-9511-4071-a59a-524c1e38e7f4 | 192.168.64.7     | 10.255.186.38       | 749b666b-347c-48c5-ab49-36bccb837158 |
++--------------------------------------+------------------+---------------------+--------------------------------------+
+
+
+
+
+
+
+
