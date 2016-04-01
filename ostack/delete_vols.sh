@@ -1,5 +1,12 @@
 #!/bin/bash
-# Delete a group of created volumes
+##======================================================================================###
+#   Delete a group of created volumes
+#   Created by:  Karl Vietmeier
+#                karlv@storagenet.org
+#  
+#   Delete the Cinder volumes to test XtermIO Cinder driver
+###======================================================================================###
+
 
 startvols=$(cinder list | grep Xtr | wc -l|xargs)
 
@@ -14,10 +21,11 @@ echo "`date` = Deleting Volumes"
 echo "`date` = =========================================================="
 echo "`date` = "
 
-# wait for input
+# Wait for input
 echo "`date` = Press <RETURN> to continue"
 read 
 
+# Delete the volumes
 for vol in $(seq -f "%03g" 1 20)
    do
      echo "`date` "=" cinder delete XtremIO_Vol${vol}"
