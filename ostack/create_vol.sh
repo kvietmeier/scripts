@@ -1,15 +1,27 @@
 #!/bin/bash
-# Create Nova instances based on existing volumes of type "XtremIO"
+###======================================================================================###
+#   Create empty Cinder volumes
+#   Created by:  Karl Vietmeier
+#                karlv@storagenet.org
+#  
+#   Create an arbitrary number opf empty Cinder volumes
+###======================================================================================###
 
+# Vars
+startvols=$(cinder list | grep Xtr | wc -l|xargs)
 
+echo $numvols
+
+# Main
 echo "`date` = "
-echo "`date` = ====================================================="
-echo "`date` = There are Currently no Volumes Created in the Project"
-echo "`date` = ====================================================="
+echo "`date` = =========================================================="
+echo "`date` = There are Currently $startvols Volumes Created in the Project"
+echo "`date` = =========================================================="
 echo "`date` = "
-cinder list
 echo "`date` = "
-echo "`date` = Creating 500 Volumes"
+echo "`date` = =========================================================="
+echo "`date` = Creating Volumes"
+echo "`date` = =========================================================="
 echo "`date` = "
 
 # wait for input
@@ -20,19 +32,23 @@ for vol in $(seq -f "%03g" 1 20)
    do
      echo "`date` = cinder create 10 --display-name XtremIO_Vol${vol} --volume-type XtremIO"
      #echo "...."
-     #cinder create 10 --display-name XtremIO_Vol${vol} --volume-type XtremIO &> /dev/null
+     cinder create 10 --display-name XtremIO_Vol${vol} --volume-type XtremIO &> /dev/null
    done
 sleep 1
 echo "`date` = "
 echo "`date` = "
+echo "`date` = =========================================================="
 echo "`date` = Completed Volume Creation"
+echo "`date` = =========================================================="
 sleep 1
 echo "`date` = cinder list"
 cinder list
 
-numvols=$(cinder list | grep Xtr | wc -l)
+endvols=$(cinder list | grep Xtr | wc -l|xargs)
 
 echo "`date` = "
-echo "`date` = $numvols Volumes Created" 
+echo "`date` = =========================================================="
+echo "`date` = $endvols Volumes Created" 
+echo "`date` = =========================================================="
 echo "`date` = "
 sleep 5

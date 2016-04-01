@@ -1,33 +1,42 @@
 #!/bin/bash
 # Delete a group of created volumes
 
+startvols=$(cinder list | grep Xtr | wc -l|xargs)
 
 echo "`date` = "
-echo "`date` = ====================================================="
-echo "`date` =                   Removing Volumes "
-echo "`date` = ====================================================="
+echo "`date` = =========================================================="
+echo "`date` = Removing $startvols Volumes "
+echo "`date` = =========================================================="
 echo "`date` = "
+echo "`date` = =========================================================="
 echo "`date` = Deleting Volumes"
+echo "`date` = =========================================================="
 echo "`date` = "
 
 # wait for input
 echo "`date` = Press <RETURN> to continue"
 read 
 
-for vol in {1..20}
+for vol in $(seq -f "%03g" 1 20)
    do
-     echo "`date`; echo " = " ;cinder delete XtremIO_Vol${vol}"
-     echo "`date` = "
+     echo "`date` "=" cinder delete XtremIO_Vol${vol}"
      cinder delete XtremIO_Vol${vol} & >/dev/null
    done
 
 sleep 1
 echo "`date` = "
-echo "`date` = "
+echo "`date` = =========================================================="
 echo "`date` = Completed Volume Deletion"
-sleep 1
-echo "`date` = cinder list"
-cinder list
+echo "`date` = =========================================================="
 echo "`date` = "
-echo "`date` = $(cinder list | grep Xtr | wc -l) Volumes" 
+echo "`date` = cinder list"
+sleep 20
+cinder list
+
+endvols=$(cinder list | grep Xtr | wc -l|xargs)
+
+echo "`date` = "
+echo "`date` = =========================================================="
+echo "`date` = $endvols Volumes Remain" 
+echo "`date` = =========================================================="
 echo "`date` = "
