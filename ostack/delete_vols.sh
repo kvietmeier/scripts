@@ -9,6 +9,11 @@
 
 
 startvols=$(cinder list | grep Xtr | wc -l|xargs)
+num_vols=20
+vol_type="XtremIO"
+vol_size=10
+vol_name=XtremIO_Vol-
+
 
 echo "`date` = "
 echo "`date` = =========================================================="
@@ -28,8 +33,8 @@ read
 # Delete the volumes
 for vol in $(seq -f "%03g" 1 20)
    do
-     echo "`date` "=" cinder delete XtremIO_Vol${vol}"
-     cinder delete XtremIO_Vol${vol} & >/dev/null
+     echo "`date` "=" cinder delete ${vol_name}${vol}"
+     cinder delete ${vol_name}${vol} & >/dev/null
    done
 
 sleep 1

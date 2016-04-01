@@ -8,8 +8,13 @@
 ###======================================================================================###
 
 startvols=$(cinder list | grep Xtr | wc -l|xargs)
+num_vols=20
+vol_type="XtremIO"
+vol_size=10
+vol_name=XtremIO_Vol-
 
-echo "`date` = "
+
+
 echo "`date` = =========================================================="
 echo "`date` = There are Currently $startvols Volumes Created in the Project"
 echo "`date` = =========================================================="
@@ -27,8 +32,8 @@ read
 # Create the volumes
 for vol in $(seq -f "%03g" 1 20)
    do
-     echo "`date` = cinder create 10 --display-name XtremIO_Vol${vol} --volume-type XtremIO"
-     cinder create 10 --display-name XtremIO_Vol${vol} --volume-type XtremIO &> /dev/null
+     echo "`date` = cinder create 10 --display-name ${vol_name}${vol} --volume-type $vol_type"
+     cinder create 10 --display-name ${vol_name}${vol} --volume-type $vol_type &> /dev/null
    done
 sleep 1
 
