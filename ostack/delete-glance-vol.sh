@@ -14,7 +14,8 @@ num_vols=20
 image_id=811fed1f-7d13-4da2-900e-f33e5ceff682
 vol_type="XtremIO"
 vol_size=10
-vol_name=XtremIO_BootVol-
+#vol_name=XtremIO_BootVol-
+vol_name=XtermIO_Vol
 
 echo "`date` = "
 echo "`date` = =========================================================="
