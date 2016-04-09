@@ -50,11 +50,11 @@ sleep 1
 echo "`date` = cinder list"
 cinder list
 
-endvols=$(cinder list | grep Xtr | wc -l|xargs)
+endvols=$(cinder list | grep BootVol | wc -l|xargs)
 
 echo "`date` = "
 echo "`date` = =========================================================="
-echo "`date` = $endvols Volumes Created" 
+echo "`date` = $endvols Nova Bootable Volumes Created" 
 echo "`date` = =========================================================="
 echo "`date` = "
 sleep 5

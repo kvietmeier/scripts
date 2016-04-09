@@ -1,20 +1,19 @@
 #!/bin/bash
-###======================================================================================###
-#   Delete Glance volumes 
+##======================================================================================###
+#   Delete a group of created volumes
 #   Created by:  Karl Vietmeier
 #                karlv@storagenet.org
 #  
-#   Clean Up script
+#   Delete the Cinder volumes to test XtermIO Cinder driver
 ###======================================================================================###
 
-## Vars
-startvols=$(cinder list | grep Xtr | wc -l|xargs)
 
-num_vols=20
-image_id=811fed1f-7d13-4da2-900e-f33e5ceff682
+startvols=$(cinder list | grep Xtr | wc -l|xargs)
+num_vols=200
 vol_type="XtremIO"
 vol_size=10
-vol_name=XtremIO_BootVol-
+vol_name=XtremIO_Vol-
+
 
 echo "`date` = "
 echo "`date` = =========================================================="
@@ -32,10 +31,10 @@ echo "`date` = Press <RETURN> to continue"
 read 
 
 # Delete the volumes
-for vol in $(seq -f "%02g" 1 5)
+for volid in $(cinder list | awk '$4 == "available" {print $2}')
    do
-     echo "`date` "=" cinder delete ${vol_name}${vol}"
-     cinder delete ${vol_name}${vol} & >/dev/null
+     echo "`date` "=" cinder delete $volid"
+     cinder delete $volid & >/dev/null
    done
 
 sleep 1
@@ -44,8 +43,8 @@ echo "`date` = =========================================================="
 echo "`date` = Completed Volume Deletion"
 echo "`date` = =========================================================="
 echo "`date` = "
-echo "`date` = cinder list"
-sleep 20
+echo "`date` = cinder list --sort name:desc"
+sleep 15
 cinder list
 
 endvols=$(cinder list | grep Xtr | wc -l|xargs)
@@ -55,5 +54,3 @@ echo "`date` = =========================================================="
 echo "`date` = $endvols Volumes Remain" 
 echo "`date` = =========================================================="
 echo "`date` = "
-
-

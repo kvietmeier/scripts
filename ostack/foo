@@ -1,0 +1,9 @@
++--------------------------------------+-------------+--------------------+------+-------------+----------+-------------+
+|                  ID                  |    Status   |        Name        | Size | Volume Type | Bootable | Attached to |
++--------------------------------------+-------------+--------------------+------+-------------+----------+-------------+
+| 908f4887-6eee-4735-965b-9c349cd579db | downloading | XtremIO_BootVol-03 |  10  |   XtremIO   |  false   |             |
+| 93498bb8-19eb-4e17-b4d4-0fa35a974d27 | downloading | XtremIO_BootVol-05 |  10  |   XtremIO   |  false   |             |
+| 93a595b4-d05f-4ec4-9570-c75181ede26c | downloading | XtremIO_BootVol-02 |  10  |   XtremIO   |  false   |             |
+| db127efa-32eb-4cf2-a65a-9e58146bd32e | downloading | XtremIO_BootVol-01 |  10  |   XtremIO   |  false   |             |
+| dc385589-c6e7-44a5-8ce3-92ac67188c42 | downloading | XtremIO_BootVol-04 |  10  |   XtremIO   |  false   |             |
++--------------------------------------+-------------+--------------------+------+-------------+----------+-------------+

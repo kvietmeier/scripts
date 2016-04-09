@@ -108,6 +108,9 @@ Positional arguments:
 ## extend              
    Attempts to extend size of an existing volume.
 
+   (create a bunch of 3GB volumes, oops, they need to be 30GB, extend them.)
+   (create extend scripts)
+
 vietmeik@Skarn (~/sd/projects/atc/emc)$ cinder help extend
 usage: cinder extend <volume> <new_size>
 
@@ -369,7 +372,7 @@ vietmeik@Skarn (~/xtremio)$ cinder list
 ###==============================================================###
 ### - bash scripts
 ###==============================================================###
-# - Parse cinder output for scripts
+# - Parse cinder output in various ways for scripts
 cinder list | grep XtremIO
 cinder list | grep XtremIO | awk '{print $2}'
 cinder list | grep XtremIO | awk '$4 == "available" {print $2}'
@@ -378,6 +381,22 @@ cinder list | awk '$10 == "XtremIO" {print $4}'
 cinder list | awk '$4 == "available" && $10 == "XtremIO" {print $2}'
 cinder list | awk '$4 == "downloading" && $10 == "XtremIO" {print $6}' | wc -l
 cinder list | awk '$4 == "downloading" && $10 == "XtremIO" {print $2}' | wc -l
+
+
+# Find a network number based on partial match
+neutron net-list | awk '$4 ~ /XtremIO/ {print $2}'
+
+vietmeik@Skarn (/Volumes/SD_Card/projects/scripts/ostack)$ neutron net-list
++--------------------------------------+----------------+------------------------------------------------------+
+| id                                   | name           | subnets                                              |
++--------------------------------------+----------------+------------------------------------------------------+
+| 006866ce-7ee4-4c46-85f1-ec9560835dc5 | net04_ext      | 3045001e-e2b2-4608-9b3e-24ee915ea853                 |
+| 7224a6c5-ff91-459f-9ee9-c87df213b265 | XtremIO-01_int | 9555056a-70ee-447f-8a23-70466c68d502 192.168.64.0/24 |
++--------------------------------------+----------------+------------------------------------------------------+
+
+vietmeik@Skarn (/Volumes/SD_Card/projects/scripts/ostack)$ neutron net-list | awk '$4 ~ /XtremIO/ {print $2}'
+7224a6c5-ff91-459f-9ee9-c87df213b265
+
 
 
 # - Create and Copy Image (careful - these take a long time to copy)
@@ -907,9 +926,74 @@ vietmeik@Skarn (~/sd/projects/atc/emc)$ neutron floatingip-list
 | eb38b566-9511-4071-a59a-524c1e38e7f4 | 192.168.64.7     | 10.255.186.38       | 749b666b-347c-48c5-ab49-36bccb837158 |
 +--------------------------------------+------------------+---------------------+--------------------------------------+
 
+####====================================================================####
+####      Parsing CLI Output
+####====================================================================####
+
+Use "openstack" command to format out in different forms
+
+The usual not directly useful - 
+vietmeik@Skarn (/Volumes/SD_Card/projects/scripts/ostack)$ nova list
++--------------------------------------+-----------+--------+------------+-------------+------------------------------+
+| ID                                   | Name      | Status | Task State | Power State | Networks                     |
++--------------------------------------+-----------+--------+------------+-------------+------------------------------+
+| 38c30baf-00b5-49b8-a022-1bc66318dff4 | Instance1 | ACTIVE | -          | Running     | XtremIO-01_int=192.168.64.10 |
+| d89e461a-823d-412d-81fd-29d272883c69 | Instance2 | ACTIVE | -          | Running     | XtremIO-01_int=192.168.64.11 |
+| bf9bb83a-0c4b-4399-a227-5c0e083045c9 | Instance3 | ACTIVE | -          | Running     | XtremIO-01_int=192.168.64.12 |
+| 13b548f5-736b-4473-adcd-c2452f0b0463 | Instance4 | ACTIVE | -          | Running     | XtremIO-01_int=192.168.64.13 |
+| f61abf5d-bba8-4f2b-83ef-6768bab0df6a | Instance5 | ACTIVE | -          | Running     | XtremIO-01_int=192.168.64.14 |
++--------------------------------------+-----------+--------+------------+-------------+------------------------------+
+
+### In csv or json - 
+vietmeik@Skarn (/Volumes/SD_Card/projects/scripts/ostack)$ openstack server list -f csv
+"ID","Name","Status","Networks"
+"f61abf5d-bba8-4f2b-83ef-6768bab0df6a","Instance5","ACTIVE","XtremIO-01_int=192.168.64.14"
+"13b548f5-736b-4473-adcd-c2452f0b0463","Instance4","ACTIVE","XtremIO-01_int=192.168.64.13"
+"bf9bb83a-0c4b-4399-a227-5c0e083045c9","Instance3","ACTIVE","XtremIO-01_int=192.168.64.12"
+"d89e461a-823d-412d-81fd-29d272883c69","Instance2","ACTIVE","XtremIO-01_int=192.168.64.11"
+"38c30baf-00b5-49b8-a022-1bc66318dff4","Instance1","ACTIVE","XtremIO-01_int=192.168.64.10"
+
+vietmeik@Skarn (/Volumes/SD_Card/projects/scripts/ostack)$ openstack server list -f json
+[
+  {
+    "Status": "ACTIVE",
+    "Networks": "XtremIO-01_int=192.168.64.14",
+    "ID": "f61abf5d-bba8-4f2b-83ef-6768bab0df6a",
+    "Name": "Instance5"
+  },
+  {
+    "Status": "ACTIVE",
+    "Networks": "XtremIO-01_int=192.168.64.13",
+    "ID": "13b548f5-736b-4473-adcd-c2452f0b0463",
+    "Name": "Instance4"
+  },
+  {
+    "Status": "ACTIVE",
+    "Networks": "XtremIO-01_int=192.168.64.12",
+    "ID": "bf9bb83a-0c4b-4399-a227-5c0e083045c9",
+    "Name": "Instance3"
+  },
+  {
+    "Status": "ACTIVE",
+    "Networks": "XtremIO-01_int=192.168.64.11",
+    "ID": "d89e461a-823d-412d-81fd-29d272883c69",
+    "Name": "Instance2"
+  },
+  {
+    "Status": "ACTIVE",
+    "Networks": "XtremIO-01_int=192.168.64.10",
+    "ID": "38c30baf-00b5-49b8-a022-1bc66318dff4",
+    "Name": "Instance1"
+  }
 
 
-
-
-
-
+This is your host IP address: 172.10.10.51
+This is your host IPv6 address: ::1
+Horizon is now available at http://172.10.10.51/dashboard
+Keystone is serving at http://172.10.10.51:5000/
+The default users are: admin and demo
+The password: n0mad1c
+2016-04-09 00:47:51.578 | stack.sh completed in 2366 seconds.
+vagrant@devstack01:~/stack$ exit
+logout
+Connection to 127.0.0.1 closed.
