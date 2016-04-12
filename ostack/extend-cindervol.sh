@@ -48,7 +48,7 @@ echo "`date` = Completed Volume Extension"
 echo "`date` = =========================================================="
 sleep 1
 echo "`date` = "
-echo "`date` = openstack volume list"
+echo "`date` = cinder list --sort name:desc"
 echo "`date` = "
 cinder list --sort name:desc
 

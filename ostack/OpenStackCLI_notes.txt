@@ -997,3 +997,67 @@ The password: n0mad1c
 vagrant@devstack01:~/stack$ exit
 logout
 Connection to 127.0.0.1 closed.
+
+
+### (switch to admin creds)
+vietmeik@Skarn (/Volumes/SD_Card/projects/scripts/ostack)$ ./echo-creds.sh
+AUTH_URL   : http://10.255.186.6:5000/v2.0
+TENANT_ID  : f485ccaf3f02479281d288a3220a22e7
+TENANT_NAME: admin
+USERNAME   : admin
+PASSWORD   : admin
+
+vietmeik@Skarn (/Volumes/SD_Card/projects/scripts/ostack)$ cinder quota-defaults 
++-------------------+-------+
+|      Property     | Value |
++-------------------+-------+
+|  backup_gigabytes |  1000 |
+|      backups      |   10  |
+|     gigabytes     | 10000 |
+|   gigabytes_LVM   |   -1  |
+| gigabytes_XtremIO |   -1  |
+|     snapshots     |  1000 |
+|   snapshots_LVM   |   -1  |
+| snapshots_XtremIO |   -1  |
+|      volumes      |  5000 |
+|    volumes_LVM    |   -1  |
+|  volumes_XtremIO  |   -1  |
++-------------------+-------+
+
+vietmeik@Skarn (/Volumes/SD_Card/projects/scripts/ostack)$ cinder quota-usage 3f3e67e93ff04a2e9df23b6a7758ad88
++-------------------+--------+----------+-------+
+|        Type       | In_use | Reserved | Limit |
++-------------------+--------+----------+-------+
+|  backup_gigabytes |   0    |    0     |  1000 |
+|      backups      |   0    |    0     |   10  |
+|     gigabytes     |  9930  |    0     | 10000 |
+|   gigabytes_LVM   |   0    |    0     |   -1  |
+| gigabytes_XtremIO |  2000  |    0     |   -1  |
+|     snapshots     |   0    |    0     |  1000 |
+|   snapshots_LVM   |   0    |    0     |   -1  |
+| snapshots_XtremIO |   0    |    0     |   -1  |
+|      volumes      |  202   |    0     |  5000 |
+|    volumes_LVM    |   0    |    0     |   -1  |
+|  volumes_XtremIO  |  200   |    0     |   -1  |
++-------------------+--------+----------+-------+
+
+vietmeik@Skarn (/Volumes/SD_Card/projects/scripts/ostack)$ cinder quota-update --gigabytes 500000 3f3e67e93ff04a2e9df23b6a7758ad88
++-------------------+--------+
+|      Property     | Value  |
++-------------------+--------+
+|  backup_gigabytes |  1000  |
+|      backups      |   10   |
+|     gigabytes     | 500000 |
+|   gigabytes_LVM   |   -1   |
+| gigabytes_XtremIO |   -1   |
+|     snapshots     |  1000  |
+|   snapshots_LVM   |   -1   |
+| snapshots_XtremIO |   -1   |
+|      volumes      |  5000  |
+|    volumes_LVM    |   -1   |
+|  volumes_XtremIO  |   -1   |
++-------------------+--------+
+
+
+
+
