@@ -562,7 +562,7 @@ Units = sectors of 1 * 512 = 512 bytes
 Sector size (logical/physical): 512 bytes / 512 bytes
 I/O size (minimum/optimal): 512 bytes / 512 bytes
 
-root@instance1 ~]# parted -a optimal --script /dev/vdb -- mklabel gpt
+[root@instance1 ~]# parted -a optimal --script /dev/vdb -- mklabel gpt
 [root@instance1 ~]# parted -a optimal --script /dev/vdb -- mkpart primary 0% 100%
 [root@instance1 ~]# mkfs -t ext3 /dev/vdb1
 mke2fs 1.42.9 (28-Dec-2013)
@@ -652,7 +652,7 @@ vietmeik@Skarn (~/xtremio/scripts)$ openstack volume list
 ### - Snapshot manipulation
 ###==============================================================###
 
-vietmeik@Skarn (~/xtremio/scripts)$ cinder snapshot-create --name XtremIO_Snap01 --description "Test" XtremIO_Vol100
+vietmeik@Skarn (~/xtremio/scripts)$ cinder snapshot-create --display-name XtremIO_Snap01 --display-description "Test" XtremIO_Vol100
 +-------------+--------------------------------------+
 |   Property  |                Value                 |
 +-------------+--------------------------------------+
@@ -1057,6 +1057,34 @@ vietmeik@Skarn (/Volumes/SD_Card/projects/scripts/ostack)$ cinder quota-update -
 |    volumes_LVM    |   -1   |
 |  volumes_XtremIO  |   -1   |
 +-------------------+--------+
+
+
+
+parted -a optimal --script /dev/vdb -- mklabel gpt
+parted -a optimal --script /dev/vdb -- mkpart primary 0% 100%
+mkfs -t ext3 /dev/vdb1
+mount /dev/vdb1 /mnt
+df -kh
+
+
+device {
+ vendor XtremIO
+ product XtremApp
+ features “0”
+ hardware_handler “0”
+ rr_weight priorities
+ rr_min_io 1
+ path_selector “round-robin 0”
+ path_checker tur
+ path_grouping_policy multibus
+}
+
+systemctl start ovirt-guest-agent.service
+systemctl enable ovirt-guest-agent.service
+yum install spice-vdagent -y 
+service spice-vdagentd start
+chkconfig spice-vdagentd on
+
 
 
 

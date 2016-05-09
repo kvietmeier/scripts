@@ -28,7 +28,7 @@ echo "`date` = Press <RETURN> to continue"
 read 
 
 # Create the volumes
-for vol in $(seq -f "%03g" 1 200)
+for vol in $(seq -f "%03g" 1 20)
    do
      echo "`date` = cinder create 10 --display-name ${vol_name}${vol} --volume-type $vol_type"
      cinder create 10 --display-name ${vol_name}${vol} --volume-type $vol_type &> /dev/null

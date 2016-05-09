@@ -43,11 +43,16 @@ echo "`date` = =========================================================="
 echo "`date` = Completed Volume Deletion"
 echo "`date` = =========================================================="
 echo "`date` = "
-echo "`date` = cinder list --sort name:desc"
-sleep 15
+#echo "`date` = cinder list --sort name:desc"
+echo "`date` = cinder list"
+sleep 5
 cinder list
 
-endvols=$(cinder list | grep Xtr | wc -l|xargs)
+endvols=$(cinder list | awk '$4 == "available" {print $2}' | wc -l|xargs)
+while [ $endvols -ne 0 ]
+	do
+		endvols=$(cinder list | awk '$4 == "available" {print $2}' | wc -l|xargs)
+	done
 
 echo "`date` = "
 echo "`date` = =========================================================="
