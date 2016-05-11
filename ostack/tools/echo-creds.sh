@@ -1,0 +1,6 @@
+#!/bin/bash
+echo "AUTH_URL   :" $OS_AUTH_URL
+echo "TENANT_ID  :" $OS_TENANT_ID
+echo "TENANT_NAME:" $OS_TENANT_NAME
+echo "USERNAME   :" $OS_USERNAME
+echo "PASSWORD   :" $OS_PASSWORD
