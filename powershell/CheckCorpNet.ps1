@@ -3,6 +3,11 @@
 # https://docs.microsoft.com/en-us/powershell/module/dnsclient/get-dnsclientglobalsetting?view=win10-ps
 # https://docs.microsoft.com/en-us/powershell/module/dnsclient/get-dnsclient?view=win10-ps
 
+#  Above may not work - not reliable
+#  Try -  get-wmiobject -query "Select * FROM Win32_NetworkAdapterConfiguration WHERE IpEnabled='TRUE'"
+# http://www.savagenomads.net/2009/07/21/powershell_to_get_network_settings/
+
+
 # Domain to match
 $dnsDomain = "intel"
 

@@ -31,9 +31,7 @@ $PSDefaultParameterValues["Out-File:Encoding"]="utf8"
 $http_proxy='SetYourCorpProxy'
 $https_proxy='SetYourCorpProxy'
 $no_proxy='127.0.0.1, 172.16.0.0, 172.10.0.0'
-
-# Domain to match
-$dnsDomain = "MyCorpDomain"
+$vpnAdapter="cisco anyconnect"
 
 
 #######################################################
@@ -460,56 +458,42 @@ Function Test-VPNConnection
 }
 
 
-function CheckCorpDomain ($domain) 
-{
-    # Use this to parse out the DNS domains to see if we are on a corp domain - not a perfect solution but working for now
-    # Parse out FQDN
-    $dnsDomainList = Get-DnsClientGlobalSetting
-    $FQDN = $dnsDomainList.SuffixSearchList | Select-Object -Last 1
-
-    # create an array
-    $dnsParts = $FQDN.Substring($FQDN.IndexOf(".") + 1).split(".")
-
-    # Find the element that matches
-    $corpDomain = $dnsParts -contains $domain
-    return $corpDomain
-}
-
 
 # Get VPN Status
 $vpnstatus=Test-VPNConnection -LikeAdapterDescription "cisco anyconnect"
 
-# Are we using corp DNS?
-$corpDNS = CheckCorpDomain ($dnsDomain)
-
+# Identify active IPV4 Interface and network type
+$activeIPV4Interface = Get-NetRoute -DestinationPrefix 0.0.0.0/0| Sort-Object {$_.RouteMetric+(Get-NetIPInterface -AssociatedRoute $_).InterfaceMetric}| Select-Object -First 1 -ExpandProperty InterfaceIndex
+$activeNetworkType=(Get-NetConnectionProfile -InterfaceIndex $activeIPV4Interface).NetworkCategory
 
 # Set proxies if VPN is up or we are on corp network
-if (($vpnstatus -eq "True") -or ($corpDNS -eq "True"))
+if (($vpnstatus -eq "True") -or ($activeNetworkType -eq "DomainAuthenticated"))
 {
 	# Proxies
 	$env:HTTP_PROXY="$http_proxy"
 	$env:HTTPS_PROXY="$https_proxy"
 	$env:NO_PROXY="$no_proxy"
 
-	# Update Vagrant flag file
-	set-Content -Path C:\Users\ksvietme\.setproxies -Value 'True'
-
     if ($vpnstatus -eq "True") { 
            Write-Host "VPN is up - Enabling Proxies:"
     }
     else { Write-Host "On Corp Network - Enabling Proxies:" }
 
+	# Update Vagrant flag file
+    set-Content -Path C:\Users\ksvietme\.setproxies -Value 'True'
+    
 	Write-Host " "
 	Write-Host "HTTP Proxy    - $HTTP_PROXY"
 	Write-Host "HTTPS Proxy   - $HTTPS_PROXY"
 	Write-Host "No Proxy      - $NO_PROXY"
-	Write-Host " "
+    Write-Host " "
+    
 } else {
     
-    Write-Host "  Not on Corp Network - Not Setting Proxies"
+	# Update Vagrant flag file
+    set-Content -Path C:\Users\ksvietme\.setproxies -Value 'False'
+    
+    Write-Host "Not on Corp Network and no VPN - Not Setting Proxies"
     Write-Host ""
     
-	# Update Vagrant flag file
-	set-Content -Path C:\Users\ksvietme\.setproxies -Value 'False'
 }
-
