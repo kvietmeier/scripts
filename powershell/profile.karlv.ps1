@@ -28,10 +28,13 @@ $PSDefaultParameterValues["Out-File:Encoding"]="utf8"
 ###- Set some variables
 
 # Vagrant doesn't like the Intel https proxy
-$http_proxy='SetYourCorpProxy'
-$https_proxy='SetYourCorpProxy'
+$http_proxy='http://proxy-chain.intel.com:911'
+$https_proxy='http://proxy-chain.intel.com:911'
 $no_proxy='127.0.0.1, 172.16.0.0, 172.10.0.0'
 $vpnAdapter="cisco anyconnect"
+
+# Domain to match
+$dnsDomain = "intel"
 
 
 #######################################################
@@ -458,13 +461,19 @@ Function Test-VPNConnection
 }
 
 
-
 # Get VPN Status
-$vpnstatus=Test-VPNConnection -LikeAdapterDescription "cisco anyconnect"
+$vpnstatus=Test-VPNConnection -LikeAdapterDescription $vpnAdapter
 
 # Identify active IPV4 Interface and network type
-$activeIPV4Interface = Get-NetRoute -DestinationPrefix 0.0.0.0/0| Sort-Object {$_.RouteMetric+(Get-NetIPInterface -AssociatedRoute $_).InterfaceMetric}| Select-Object -First 1 -ExpandProperty InterfaceIndex
-$activeNetworkType=(Get-NetConnectionProfile -InterfaceIndex $activeIPV4Interface).NetworkCategory
+$activeIPV4Interface = Get-NetRoute -DestinationPrefix 0.0.0.0/0 -ErrorAction SilentlyContinue -ErrorVariable NoRoute | Sort-Object {$_.RouteMetric+(Get-NetIPInterface -AssociatedRoute $_).InterfaceMetric}| Select-Object -First 1 -ExpandProperty InterfaceIndex 
+if ($NoRoute) {
+    # The network isn't up - so we don't need to set proxies
+    Write-Host "Running without an external network"
+}
+else {
+    # We have a route to 0.0.0.0/0 and an active network up.ink
+    $activeNetworkType = (Get-NetConnectionProfile -InterfaceIndex $activeIPV4Interface).NetworkCategory
+}
 
 # Set proxies if VPN is up or we are on corp network
 if (($vpnstatus -eq "True") -or ($activeNetworkType -eq "DomainAuthenticated"))
@@ -497,3 +506,4 @@ if (($vpnstatus -eq "True") -or ($activeNetworkType -eq "DomainAuthenticated"))
     Write-Host ""
     
 }
+
