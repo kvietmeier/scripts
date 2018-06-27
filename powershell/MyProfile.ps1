@@ -7,8 +7,8 @@ Import-Module posh-git
 
 # Color ls output and other aliases
 Set-Alias l Get-ChildItemColor -option AllScope
-Set-Alias dir Get-ChildItemColor -option AllScope
 Set-Alias ls Get-ChildItemColorFormatWide -option AllScope
+Set-Alias dir Get-ChildItemColor -option AllScope
 Set-Alias -Name cd -value cddash -Option AllScope
 
 
@@ -27,8 +27,15 @@ $PSDefaultParameterValues["Out-File:Encoding"]="utf8"
 
 ###- Set some variables
 
+# Vagrant doesn't like the Intel https proxy
+$http_proxy='yourproxy'
+$https_proxy='yourproxy'
+$socks_proxy='yourproxy'
+$no_proxy='127.0.0.1, 172.16.0.0, 172.10.0.0'
+
 # Domain to match
-$dnsDomain = "intel"
+#$dnsDomain = "intel"
+$vpnAdapter="cisco anyconnect"
 
 
 #######################################################
@@ -67,43 +74,51 @@ function prompt
 #######################################################
 
 function uptime {
-	Get-WmiObject win32_operatingsystem | select csname, @{LABEL='LastBootUpTime';
+	Get-WmiObject win32_operatingsystem | Select-Object csname, @{LABEL='LastBootUpTime';
 	EXPRESSION={$_.ConverttoDateTime($_.lastbootuptime)}}
 }
 
-function reload-powershell-profile {
-	& $profile
-}
-
 function find-file($name) {
-	ls -recurse -filter "*${name}*" -ErrorAction SilentlyContinue | foreach {
+	Get-ChildItem -recurse -filter "*${name}*" -ErrorAction SilentlyContinue | ForEach-Object {
 		$place_path = $_.directory
-		echo "${place_path}\${_}"
+		Write-Output "${place_path}\${_}"
 	}
 }
 
-function get-path {
-	($Env:Path).Split(";")
+function get-path { ($Env:Path).Split(";") }
+function cd...  { Set-Location ..\.. }
+function cd.... { Set-Location ..\..\.. }
+
+Function llm
+{
+ # Lock Screen 
+ $signature = @"  
+    [DllImport("user32.dll", SetLastError = true)]  
+    public static extern bool LockWorkStation();  
+"@  
+    $LockWorkStation = Add-Type -memberDefinition $signature -name "Win32LockWorkStation" -namespace Win32Functions -passthru  
+
+    $LockWorkStation::LockWorkStation()|Out-Null
 }
+
+function exp_here {
+    explorer .
+}
+
 
 #######################################################
 # Unixlike commands
 #######################################################
 
-function df {
-	get-volume
-}
-
-function ll($name) {
-	Get-ChildItem -Path .
-}
+function df { get-volume }
+function ll($name) { Get-ChildItem -Path . }
 
 function sed($file, $find, $replace){
 	(Get-Content $file).replace("$find", $replace) | Set-Content $file
 }
 
-function sed-recursive($filePattern, $find, $replace) {
-	$files = ls . "$filePattern" -rec
+function sed_recursive($filePattern, $find, $replace) {
+	$files = Get-ChildItem . "$filePattern" -rec
 	foreach ($file in $files) {
 		(Get-Content $file.PSPath) |
 		Foreach-Object { $_ -replace "$find", "$replace" } |
@@ -113,14 +128,14 @@ function sed-recursive($filePattern, $find, $replace) {
 
 function grep($regex, $dir) {
 	if ( $dir ) {
-		ls $dir | select-string $regex
+		Get-ChildItem $dir | select-string $regex
 		return
 	}
 	$input | select-string $regex
 }
 
 function grepv($regex) {
-	$input | ? { !$_.Contains($regex) }
+	$input | Where-Object { !$_.Contains($regex) }
 }
 
 function which($name) {
@@ -132,11 +147,11 @@ function export($name, $value) {
 }
 
 function pkill($name) {
-	ps $name -ErrorAction SilentlyContinue | kill
+	Get-Process $name -ErrorAction SilentlyContinue | Stop-Process
 }
 
 function pgrep($name) {
-	ps $name
+	Get-Process $name
 }
 
 function touch($file) {
@@ -149,7 +164,7 @@ function cddash {
     } else {
         $pwd = $args[0];
     }
-    $tmp = pwd;
+    $tmp = Get-Location;
 
     if ($pwd) {
         Set-Location $pwd;
@@ -219,7 +234,7 @@ function pstree {
 
 function unzip ($file) {
     $dirname = (Get-Item $file).Basename
-    echo("Extracting", $file, "to", $dirname)
+    Write-Output("Extracting", $file, "to", $dirname)
     New-Item -Force -ItemType directory -Path $dirname
     expand-archive $file -OutputPath $dirname -ShowProgress
 }
@@ -458,7 +473,10 @@ Function Test-VPNConnection
 # Get VPN Status
 $vpnstatus=Test-VPNConnection -LikeAdapterDescription $vpnAdapter
 
-# Identify active IPV4 Interface and network type
+# Identify active IPV4 Interface and network type:
+# Odd behaviour - if you sleep, then log back in not on a network, there will be a route to 0.0.0.0 thatr doesn't show up in "route PRINT"
+# $activeIPV4Interface will get set and no route will be false - but the else statement fails because there is no connectprofle. 
+# - stil does the right thing - not setting proxies so I just have the command silently fail.
 $activeIPV4Interface = Get-NetRoute -DestinationPrefix 0.0.0.0/0 -ErrorAction SilentlyContinue -ErrorVariable NoRoute | Sort-Object {$_.RouteMetric+(Get-NetIPInterface -AssociatedRoute $_).InterfaceMetric}| Select-Object -First 1 -ExpandProperty InterfaceIndex 
 if ($NoRoute) {
     # The network isn't up - so we don't need to set proxies
@@ -466,7 +484,7 @@ if ($NoRoute) {
 }
 else {
     # We have a route to 0.0.0.0/0 and an active network up.ink
-    $activeNetworkType = (Get-NetConnectionProfile -InterfaceIndex $activeIPV4Interface).NetworkCategory
+    $activeNetworkType = (Get-NetConnectionProfile -InterfaceIndex $activeIPV4Interface -ErrorAction SilentlyContinue -ErrorVariable activeIPV4Interface).NetworkCategory
 }
 
 # Set proxies if VPN is up or we are on corp network
@@ -475,6 +493,7 @@ if (($vpnstatus -eq "True") -or ($activeNetworkType -eq "DomainAuthenticated"))
 	# Proxies
 	$env:HTTP_PROXY="$http_proxy"
 	$env:HTTPS_PROXY="$https_proxy"
+	$env:SOCKS_PROXY="$socks_proxy"
 	$env:NO_PROXY="$no_proxy"
 
     if ($vpnstatus -eq "True") { 
