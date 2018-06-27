@@ -1,4 +1,5 @@
 #! /bin/bash
+# Used during SwiftStack testing to reset volumesd to 0/empty.
 
 stop ssnoded
 
