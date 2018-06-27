@@ -27,12 +27,6 @@ $PSDefaultParameterValues["Out-File:Encoding"]="utf8"
 
 ###- Set some variables
 
-# Vagrant doesn't like the Intel https proxy
-$http_proxy='http://proxy-chain.intel.com:911'
-$https_proxy='http://proxy-chain.intel.com:911'
-$no_proxy='127.0.0.1, 172.16.0.0, 172.10.0.0'
-$vpnAdapter="cisco anyconnect"
-
 # Domain to match
 $dnsDomain = "intel"
 
