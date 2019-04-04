@@ -1,0 +1,275 @@
+#!/usr/dt/bin/dtksh
+# Version 2.0 
+# This Is A New Version Of iost Where the sd/sdn #s
+# are replaced by their c?t?d? equivalents online.
+# 
+# Version 2.1
+# Changes -- 10/30
+# 1.The sd/sdn #s are generated online and stored in an
+#   Array, hence eliminating the number of greps per 
+#   disk. This makes iost faster in terms of performance.
+# 2.The total READ/sec and WRITE/sec will be displayed after
+#   the end of one iostat output.
+# 3.Added date/time stamp at the end of each interval.
+# 4.Outputs written using printf so that formatting is better.
+# 5.Added Solaris 7 Support.
+#
+# Version 2.2
+# Changes -- 11/23
+# 1. Had to revert back to printing summary at the start
+#    Of each interval as the disk count got messed up with
+#    new nfs mounts and unmounts.
+# Version 3.0
+# Changes -- 03/23
+# 1. Compatibility with Solaris 8.0
+#
+# Version 3.1 
+# Changes -- 05/15
+# 1. Fixed the output to take care of NFS mounted FS.
+#
+#
+# Written By
+# Ravindra Neelakant
+# POLARIS Benchmark Center,
+# Menlo Park, CA.
+# Tel : (650) 688 9084, Int. Extn. 49084
+#
+set -o allexport
+set -o nolog
+typeset -F2 TOTREAD=0
+typeset -F2 TOTWRITE=0
+typeset -F2 READS=0
+typeset -F2 WRITES=0
+typeset -i cnt=0
+typeset -Z10 ctrl=""
+typeset -i procid=0
+typeset dsk=""
+typeset dsknum=""
+typeset -i TotDsk=0
+typeset -i dskcnt=0
+typeset -i INTERVAL=0
+#
+#
+function getnumdsk 
+{
+	TotDsk=`/usr/bin/iostat -x | wc -l`
+}
+
+function getdsk
+{
+	typeset LN=${1}
+	set -k ${LN}
+	sdn=${1%d*}
+	if [ "${sdn}" == "ss" ] 
+	then
+                dn=${1#*d}
+		dsk=${ssd[${dn}]}
+	elif [ "${sdn}" == "s" ]
+	then
+                dn=${1#*d}
+                dsk=${sd[${dn}]}
+	else
+		sdn="${1%t*}"
+		if [ "${sdn}" == "s" ] 
+		then
+			stn="${LN%t*}"
+			tn="${LN#st}"
+			dsk=${rmt[${tn}]}
+		else
+			sdn="${1%s*}"
+			if [ "${sdn}" == "nf" ]
+			then
+				stn="${LN%t*}"
+				tn="${LN#nfs}"
+				dsk=${nfs[${tn}]}
+			else
+				dsk="NUL"
+			fi
+		fi
+	fi
+	
+}
+		
+function getsd
+{
+
+  typeset LN=$1
+	set -k ${LN}
+	sdn=${LN%d*}
+	if [ "${sdn}" == "ss" ] || [ "${sdn}" == "s" ]
+	then
+		sdn="${sdn}d"
+		dn=${1#*d}
+		if [ "${sdn}" == "ssd" ] || [ "${sdn}" == "sd" ]
+		then 
+			pti=`grep -w "${dn} \"${sdn}\"" /etc/path_to_inst`
+			set -k  ${pti}
+			devn=${1%\"}
+			devn1=${devn#\"}
+			devn="${devn1}:a"
+			cn=`grep ${devn} /tmp/rd`
+			set -k  ${cn}
+			if [ "${sdn}" == "ssd" ]
+			then
+				ssd[${dn}]=${9%s0}
+			else
+				sd[${dn}]=${9%s0}
+			fi
+
+		fi
+	else
+		sdn="${1%t*}"
+		sdn="${sdn}t"
+		tn="${1#st}"
+		if [ "${sdn}" == "st" ]
+		then
+			pti=`grep -w "${tn} \"${sdn}\"" /etc/path_to_inst`
+			set -k ${pti}
+			devn=${1%\"}
+			devn=${devn#\"}
+			devn="${devn}:n"
+			tapn=`grep ${devn}  /tmp/tape`
+			set -k ${tapn}
+			rmt[${tn}]="RMT${9%n}"
+		else
+			sdn="${1%s*}"
+			sdn="${sdn}s"
+			nfn="${1#nfs}"
+			if [ "${sdn}" == "nfs" ]
+			then
+				nfs[${nfn}]="NFS${nfn}"
+			fi
+		fi
+	fi
+
+}
+function iost58
+{
+	iostat -DMnzsx ${INTERVAL} |&
+	while read -p LINE
+	do
+		set ${LINE}
+if [ $# -ge  9 ]
+then
+   if [ "${1}" != "extended" ]
+   then
+	if [ "${1}" == "r/s" ]
+	then
+		if [ ${cnt} != 0 ]
+		then
+			print "" 
+printf "%5s %8s  TOTAL READS/SEC   = %8.2f  MEGABYTES READ     = %7.2f\n" `date '+%m/%d %H:%M:%S'` ${READS} ${TOTREAD}
+printf "%5s %8s  TOTAL WRITES/SEC  = %8.2f  MEGABYTES WRITTEN  = %7.2f\n" `date '+%m/%d %H:%M:%S'` ${WRITES} ${TOTWRITE}
+			print ""
+			((READS=0)) 
+			((WRITES=0))
+			((TOTREAD=0))
+			((TOTWRITE=0))
+		fi
+		print "    ${11}\t${1}\t${2}\t${3}\t${4}\t${5}\t${6}\t${8}\t${10}"
+		cnt=1
+	else
+		typeset -F2 bwrite=${4}
+		typeset -F2 bread=${3}
+		dsknum="${11}"
+		
+printf "%10s    %5.1f   %5.1f    %5.1f   %5.1f   %5.1f   %5.1f  %7.1f  %3d\n" ${dsknum} ${1} ${2} ${3} ${4} ${5} ${6} ${8} ${10}
+		((TOTREAD=TOTREAD+${bread}))
+		((TOTWRITE=TOTWRITE+${bwrite}))
+		((READS=READS+${1}))
+		((WRITES=WRITES+${2}))
+	fi
+  fi
+fi
+done
+}
+#
+# Start Of iost
+#
+#
+getnumdsk
+# set -x
+if [ $# == 1 ]
+then
+	INTERVAL=${1}
+else
+	INTERVAL=30
+fi
+typeset OSR=`uname -r`
+if [ -f /tmp/rd ]
+then
+        rm /tmp/rd
+fi
+touch /tmp/rd
+ls -l /dev/rdsk >> /tmp/rd
+if [ -d /dev/osa ]
+then
+        ls -l /dev/osa/dev/rdsk >> /tmp/rd
+fi                  
+ls -l /dev/rmt >/tmp/tape
+if [ "${OSR}" == "5.6" ] || [ "${OSR}" == "5.7" ]
+then
+	/usr/bin/iostat -xM ${INTERVAL} |&
+elif [ "${OSR}" == "5.8" ] 
+then
+   iost58
+else
+	/usr/bin/iostat -x ${INTERVAL} |&
+fi
+#set -x
+while read -p LINE
+do
+((dskcnt=dskcnt+1))
+set ${LINE}
+if [ $# -ge 9 ]
+then
+   if [ "${1}" != "extended" ]
+   then
+	if [ "${2}" == "r/s" ]
+	then
+	if [ ${cnt} != 0 ]
+	then
+           if [ "${OSR}" == "5.6" ] || [ "${OSR}" == "5.7" ]
+           then
+		print "" 
+printf "%5s %8s  TOTAL READS/SEC   = %8.2f  MEGABYTES READ     = %7.2f\n" `date '+%m/%d %H:%M:%S'` ${READS} ${TOTREAD}
+printf "%5s %8s  TOTAL WRITES/SEC  = %8.2f  MEGABYTES WRITTEN  = %7.2f\n" `date '+%m/%d %H:%M:%S'` ${WRITES} ${TOTWRITE}
+		print ""
+	   else
+		print "" 
+printf "%5s %8s  TOTAL READS/SEC   = %8.2f  KILOBYTES READ     = %7.2f\n" `date '+%m/%d %H:%M:%S'` ${READS} ${TOTREAD}
+printf "%5s %8s  TOTAL WRITES/SEC  = %8.2f  KILOBYTES WRITTEN  = %7.2f\n" `date '+%m/%d %H:%M:%S'` ${WRITES} ${TOTWRITE}
+		print ""
+	   fi
+		((READS=0)) 
+		((WRITES=0))
+		((TOTREAD=0))
+		((TOTWRITE=0))
+		((dskcnt=0)) 
+	   fi
+		print "    ${1}\t${2}\t${3}\t${4}\t${5}\t${6}\t${7}\t${8}\t${10}"
+		cnt=1
+	elif [ "${4}" != "0.0" ] || [ "${5}" != "0.0" ] && [ "${2}" != "r/s" ]
+	then
+		typeset -F2 bwrite=${5}
+		typeset -F2 bread=${4}
+		dsknum=""
+		getdsk ${1}
+		if [ "${dsk}" == "" ]
+		then
+			getsd ${1}
+			getdsk ${1}
+		fi
+		if [ "${dsk}" != "NUL" ]
+		then
+		dsknum=${dsk}
+printf "%10s    %5.1f   %5.1f    %5.1f   %5.1f   %5.1f   %5.1f  %7.1f  %3d\n" ${dsknum} ${2} ${3} ${4} ${5} ${6} ${7} ${8} ${10}
+		((TOTREAD=TOTREAD+${bread}))
+		((TOTWRITE=TOTWRITE+${bwrite}))
+		((READS=READS+${2}))
+		((WRITES=WRITES+${3}))
+		fi
+	fi
+  fi
+fi
+done

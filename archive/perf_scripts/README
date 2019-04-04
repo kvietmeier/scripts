@@ -1,0 +1,60 @@
+The following script can be ran on any critical system over a period 
+of time to help build a "profile" of system usage to help determine normal 
+loads.
+
+To run with the defaults untar the files into a directory and run the
+"perf.sh" script:
+  # ./perf.sh &
+
+With each run of perf.sh, data will be collected and placed 
+in a directory with the following format:
+
+$HOSTNAME_mm_dd_hh:ss
+
+NOTE:	By default this script is configured to gather 30 minutes of 
+		performance data and will generate output in: 
+		/tmp/$HOSTNAME_mm_dd_hh:ss
+
+
+You can modify the script (perf.sh) to direct the data to another
+location by changing the following line in perf.sh 
+  export PERFDIR="/tmp/"
+  example:
+  export PERFDIR="${PERFDIRHOME}/runs"
+
+  This would create a directory called runs under the directory 
+  where perf.sh is run from.  Output would then be stored there. 
+
+  example:
+	 Putting the script in /opt/perf and creating directory called "runs"
+	 results in - 
+	 export PERFDIR="${PERFDIRHOME}/runs"
+
+	 Output -
+	 /opt/perf/runs
+	  pegmatite_04_04_15:01/
+	  pegmatite_04_04_15:05/
+
+
+You will probably want to put the script into a cronjob so it can run unattended 
+during the time periods you are interested in.  Here is an example crontab entry:
+# Run performance script
+30 8,9,11,13,15,22 * * *       /opt/perf/perf.sh  # 
+
+This will run the script on the half hour every day at 08:30, 09:30, 11:30, 13:30
+15:30, 22:30
+
+
+When you are ready to send the output to Sun simply tar and compress the 
+output directory then ftp the tar.gz file to "supportfiles.sun.com" and
+put it in the cores directory.  When it is finished uploading notify 
+your Sun support personel that it is finished so they can retrieve it.
+
+# ftp supportfiles.sun.com
+  (login as anonymous)
+  ftp> cd /cores
+  ftp> bin
+  ftp> hash
+  ftp> put <-filename->
+
+  where <-filename-> is the name of the file to upload.

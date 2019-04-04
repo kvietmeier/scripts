@@ -1,0 +1,1 @@
+showrev -p | egrep -e '^Patch' | nawk '{print $2}' | sort
