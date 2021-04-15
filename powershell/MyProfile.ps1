@@ -239,7 +239,7 @@ function unzip ($file) {
     expand-archive $file -OutputPath $dirname -ShowProgress
 }
 
-#=====  Text if VPN is up
+#=====  Test if VPN is up
 # https://gallery.technet.microsoft.com/scriptcenter/Test-VPNConnection-Check-36fa4b57
 Function Test-VPNConnection
 {
