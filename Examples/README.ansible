@@ -1,0 +1,26 @@
+
+Start with getting ansible on to your machine:
+
+sudo swupd bundle-add ansible
+
+#########################################################################
+
+example of how you might run a playbook on your local machine:
+
+cd into the directory where you checked out the code.
+
+# ansible-playbook <playbook_name>.yml localhost
+
+another fun thing you can do is look at all the facts that ansible
+generates about each machine it runs on:
+
+# ansbile -m setup localhost
+
+
+
+#########################################################################
+
+Here is a listing of the scripts and the ansible roles that replace them:
+
+time.sh -> ntp
+jenkins.sh -> jenkins

@@ -1,2 +1,2 @@
-### Some really old stuff
-These are a bunch of utility scripts I wrote back in my old Sun Micro days
+### Setting Up Operating Environments
+No need for explanatation - various config files for operating environments

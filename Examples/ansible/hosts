@@ -1,0 +1,9 @@
+[infra:children]
+qa
+test
+
+[qa]
+clr-physqa.jf.intel.com
+
+[test]
+bphipps-clr.jf.intel.com
