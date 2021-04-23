@@ -1,4 +1,6 @@
 #!/bin/bash
+# Probably needs to be in te archive - 
+
 # Tear down/build up from Vagranfile in bosh-lite repository
 vagrant destroy -f  
 vagrant up
