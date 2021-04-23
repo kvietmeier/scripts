@@ -1,5 +1,5 @@
 #!/bin/bash
-# This does it old schoola and adds users to the sudoers list
+# This does it old school and adds users to the sudoers list
 # Probably better to use - "newusers /vagrant/userlist.txt"
 
 for i in $(cat /vagrant/userlist.txt | awk -F ":" '{print $1}')
