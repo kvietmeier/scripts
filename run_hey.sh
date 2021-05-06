@@ -17,6 +17,5 @@
 # Run the installed version 
 target_url="http://<>"
 duration="20m"
-
 hey -z $duration $target_url
 
