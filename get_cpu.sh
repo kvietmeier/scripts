@@ -1,5 +1,6 @@
 #!/usr/bin/bash
 # Get CPU type from hosts
+# 
 
 for i in {2..5}
 do  	
