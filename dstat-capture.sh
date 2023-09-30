@@ -38,10 +38,17 @@ hdd=$(IFS=,; echo "${HDD[*]}")
 
 # Configure Output
 CURRENT_TIME=$(date +%m%d:%H%M)
-OUTPUTDIR="/root/output/"
+OUTPUTDIR=${HOME}/dstat/
+
+# Check if the directory for output exists
+if [ ! -d $OUTPUTDIR ] ; then
+  mkdir $OUTPUTDIR 2> /dev/null
+fi
+
 OUTPUTFILE_proc=${OUTPUTDIR}dstat_process.${CURRENT_TIME}.csv
 OUTPUTFILE_io=${OUTPUTDIR}dstat_io.${CURRENT_TIME}.csv
 OUTPUTFILE_sys=${OUTPUTDIR}dstat_sys.${CURRENT_TIME}.csv
+
 
 # Command intervals
 sinterval=1

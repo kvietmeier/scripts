@@ -15,9 +15,16 @@ bg_cmd()
 
 #-- Variables
 CURRENT_TIME=$(date +%m%d:%H%M)
-OUTPUTDIR="/root/output/"
-OUTPUTFILE_PROC=${OUTPUTDIR}dstat_process.${CURRENT_TIME}.csv
-OUTPUTFILE_SYS=${OUTPUTDIR}dstat_sys.${CURRENT_TIME}.csv
+OUTPUTDIR=${HOME}/dstat/
+
+# Check if the directory for output exists
+if [ ! -d $OUTPUTDIR ] ; then
+  mkdir $OUTPUTDIR 2> /dev/null
+fi
+
+OUTPUTFILE_proc=${OUTPUTDIR}dstat_process.${CURRENT_TIME}.csv
+OUTPUTFILE_sys=${OUTPUTDIR}dstat_sys.${CURRENT_TIME}.csv
+
 
 # Command intervals
 sinterval=1

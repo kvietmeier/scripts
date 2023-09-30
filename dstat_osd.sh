@@ -1,7 +1,7 @@
 #!/bin/bash
 ###======================================= dstat_osd.sh =====================================================### 
 ###  Basic Usage: Run dstat and collect output into csv files.
-###  Collect system profile while monitoring disk usage during benchmark runs or performancde troubleshooting
+###  Collect system profile while monitoring disk usage during benchmark runs or performance troubleshooting
 ###  Created By:   Karl Vietmeier
 ###                Technical Leader, Cloud Engineering Cisco System
 ###
@@ -30,8 +30,7 @@ pcidev=$(lspci | egrep 'SATA|SAS' | grep LSI | awk '{print $1}')
 drives=($(ls -l /dev/disk/by-path | egrep $pcidev | grep -v part | awk '{print substr($11, 7)}' | sort))
 
 # Loop through array and check each drive to see if it is an SSD or HDD then populate
-# HDD and SSD apprpriately
-
+# HDD and SSD apprpriately - Ceph cluster with SSD cache drives and HDD OSD
 for drive in "${drives[@]}"
 do
      type=$(cat /sys/block/${drive}/queue/rotational)
