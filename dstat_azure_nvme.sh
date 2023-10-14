@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/bash -x
 ###==========================================================================================================### 
 #
 #    Basic Usage: Run dstat and collect output into csv files.
