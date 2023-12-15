@@ -63,6 +63,10 @@ bg_cmd()
 #bg_cmd ${dool_disk}
 #bg_cmd ${dool_sys}
 
-$dool_process
-D
-dool_process
+
+dool $dool_proc_flags --output $OUTPUTFILE_proc $sinterval $count
+
+
+
+
+
