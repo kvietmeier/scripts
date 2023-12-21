@@ -1,5 +1,5 @@
 #!/bin/bash
-# Prepare drives for Minio
+# Prepare data drives for use 
 
 for i in {0..5}
 do
@@ -15,8 +15,8 @@ do
   echo ""
   mkfs.xfs -f /dev/nvme${i}n1p1  > /dev/null 2>&1
 
-  mkdir -p /mnt/minio-data${j}
-  mount /dev/nvme${i}n1p1 /mnt/minio-data${j}
+  mkdir -p /mnt/data_disk${j}
+  mount /dev/nvme${i}n1p1 /mnt/data_disk${j}
   echo ""
 
 done
