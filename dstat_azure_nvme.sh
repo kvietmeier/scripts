@@ -51,18 +51,18 @@ dool_sys="dool $dool_sys_flags --output $OUTPUTFILE_sys $linterval $count"
 
 
 ###-- Functions
-# Run cmd in background
-bg_cmd() {
-  cmd="$@"
-  ${cmd} &>/dev/null &
+# Run dool in background
+bkground_dool () {
+  run_dool="$@"
+  ${run_dool} &>/dev/null &
   disown
 }
 
 #-- End Functions
 
 ###-- Main 
-bg_cmd ${dool_process}
-bg_cmd ${dool_io}
-bg_cmd ${dool_sys}
+bkground_dool ${dool_process}
+bkground_dool ${dool_io}
+bkground_dool ${dool_sys}
 
 
