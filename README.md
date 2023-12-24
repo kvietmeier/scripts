@@ -2,7 +2,7 @@
 
 ---
 
-Various scripts I have written for projects.  
+Various scripts I have written for Linux projects.  
 
 The OpenStack scripts were created for a Cinder project.
 They are for displaying functionality more than being useful for practical work.
