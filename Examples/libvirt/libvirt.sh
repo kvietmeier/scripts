@@ -1,4 +1,7 @@
 #!/bin/bash
+# For Clear Linux
+#
+
 SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 
 sudo -E swupd bundle-add kvm-host

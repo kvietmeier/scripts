@@ -6,7 +6,7 @@ sudo -E tee -a /etc/redsocks.conf > /dev/null <<- EOF
 redsocks {
 	local_ip = $2;
 	local_port = 1080;
-	ip = proxy-us.intel.com;
+	ip = proxy-us.foo.com;
 	port = 1080;
 	type = socks5;
 }

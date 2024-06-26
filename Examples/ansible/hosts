@@ -3,7 +3,7 @@ qa
 test
 
 [qa]
-clr-physqa.jf.intel.com
+clr-physqa.jf.foo.com
 
 [test]
-bphipps-clr.jf.intel.com
+bphipps-clr.jf.foo.com

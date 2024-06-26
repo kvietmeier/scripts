@@ -1,7 +1,7 @@
 #!/bin/bash
 PROXY_FILE='/etc/profile.d/proxy.sh'
-PROXY_URL='http://proxy-chain.intel.com'
-NAMED_DOMAINS='localhost,intel.com'
+PROXY_URL='http://proxy-chain.foo.com'
+NAMED_DOMAINS='localhost,foo.com'
 SPECIALIZED_SUBNETS='0.0.0.0/8,10.0.0.0/8,127.0.0.0/8,169.254.0.0/16,172.16.0.0/12,192.168.0.0/16,224.0.0.0/4,240.0.0.0/4'
 
 sudo -E mkdir -p "$(dirname "$PROXY_FILE")"
