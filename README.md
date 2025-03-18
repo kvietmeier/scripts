@@ -7,7 +7,9 @@ Various scripts I have written for Linux projects.
 The OpenStack scripts were created for a Cinder project.
 They are for displaying functionality more than being useful for practical work.
 
-NOTE: dstat has been replaced by "dool" - csv output is broken and dstat is no longer active.
+---
+
+Notes on dool: dstat has been replaced by "dool" - csv output is broken and dstat is no longer active.
 
 * [Dool GitHub](https://github.com/scottchiefbaker/dool/blob/master/README.md)
 * [Use Alien](https://www.serverlab.ca/tutorials/linux/administration-linux/how-install-rpm-packages-on-ubuntu-using-alien/)
