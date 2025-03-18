@@ -57,7 +57,11 @@ bkground_dool ${dool_sys}
 
 ---
 
-Usimg FIO:
+Using FIO:
+
+* [FIO](https://fio.readthedocs.io/en/latest/fio_doc.html)
+* [FIO Git Repo](https://github.com/axboe/fio)
+* [FIO-plot Git Repo](https://github.com/louwrentius/fio-plot)
 
 The FIO directory has bash scripts and FIO job files for testing attached disks and mounted storage.
 
@@ -107,5 +111,8 @@ Drop this in your cloud-init file:
   - make install
   - cd .. 
 #
-~~~
+```
+
+---
+
 
