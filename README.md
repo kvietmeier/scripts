@@ -54,3 +54,58 @@ bkground_dool ${dool_io}
 bkground_dool ${dool_sys}
 
 ```
+
+---
+
+Usimg FIO:
+
+The FIO directory has bash scripts and FIO job files for testing attached disks and mounted storage.
+
+Note on FIO - You should always download and compile the latest version, like iperf and sockperf: the versions in the online repos are old and never have the right libraries compiled in.
+
+Drop this in your cloud-init file:
+
+``` yaml
+  #
+  ###------------ Compile Software ------------###
+  # dool
+  # FIO
+  # iperf3
+  # sockperf
+  #
+  - cd /root/git
+  #
+  ## Compile dool
+  - git clone https://github.com/scottchiefbaker/dool.git
+  - cd dool
+  - ./install.py
+  - cd ..
+  #
+  ## Compile FIO
+  - git clone https://github.com/axboe/fio.git
+  - cd fio
+  - ./configure
+  - make
+  - make install
+  - cd ..
+  #
+  # Compile/install iperf3
+  - git clone "https://github.com/esnet/iperf.git"
+  - cd iperf
+  - ./configure
+  - make
+  - make install
+  - /usr/sbin/ldconfig
+  - cd ..
+  #  
+  ## Compile/install sockperf
+  - git clone "https://github.com/mellanox/sockperf"
+  - cd sockperf
+  - ./autogen.sh
+  - ./configure
+  - make
+  - make install
+  - cd .. 
+#
+~~~
+
