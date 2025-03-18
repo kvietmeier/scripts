@@ -2,10 +2,13 @@
 
 ---
 
-Various scripts I have written for Linux projects.  
+Bash, ksh, csh, and misc Linux utilities. 
 
-The OpenStack scripts were created for a Cinder project.
-They are for displaying functionality more than being useful for practical work.
+I may add my cloiud-init scripts here as well but if you want to see them now they are in the Terraform repo.
+
+---
+
+#### NOTES:
 
 ---
 
