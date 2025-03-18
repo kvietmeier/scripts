@@ -12,30 +12,29 @@ I may add my cloiud-init scripts here as well but if you want to see them now th
 
 ---
 
-Notes on dool: dstat has been replaced by "dool" - csv output is broken and dstat is no longer active.
+dool: dstat has been replaced by "dool" - csv output is broken and dstat is no longer active.
 
 * [Dool GitHub](https://github.com/scottchiefbaker/dool/blob/master/README.md)
 * [Use Alien](https://www.serverlab.ca/tutorials/linux/administration-linux/how-install-rpm-packages-on-ubuntu-using-alien/)
 
----
 
-Install dool with Ansible
+* Install dool with Ansible
 
-```yaml
-  # Install dool - multi-step - replaces dstat
-  - name: Download dool dool-1.3.0-1.noarch.rpm
-    get_url: 
-      url: "{{ dool_url }}"
-      dest: /tmp
-    tags:
-      - apt
+   ```yaml
+     # Install dool - multi-step - replaces dstat
+     - name: Download dool dool-1.3.0-1.noarch.rpm
+       get_url: 
+         url: "{{ dool_url }}"
+         dest: /tmp
+       tags:
+         - apt
 
-  - name: Install dool with alien
-    command: alien -i "{{ dool_pkg }}"
-    args: 
-      chdir: /tmp
-    tags:
-      - apt
+     - name: Install dool with alien
+       command: alien -i "{{ dool_pkg }}"
+       args: 
+         chdir: /tmp
+       tags:
+         - apt
 ```
 
 Run tools in the background - this small function lets you put a command into the background and logout:
