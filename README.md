@@ -35,29 +35,29 @@ dool: dstat has been replaced by "dool" - csv output is broken and dstat is no l
          chdir: /tmp
        tags:
          - apt
-```
+  ```
 
-Run tools in the background - this small function lets you put a command into the background and logout:
+* Run tools in the background - this small function lets you put a command into the background and logout:
 
-```bash
-# Run dool in background
-bkground_dool () {
-  run_dool="$@"
-  ${run_dool} &>/dev/null &
-  disown
-}
+   ```bash
+     # Run dool in background
+     bkground_dool () {
+     run_dool="$@"
+     ${run_dool} &>/dev/null &
+     disown
+   }
 
-# dool command line
-dool_io="dool $dool_io_flags --output $OUTPUTFILE_io $linterval $count"
-dool_process="dool $dool_proc_flags --output $OUTPUTFILE_proc $linterval $count"
-dool_sys="dool $dool_sys_flags --output $OUTPUTFILE_sys $linterval $count"
+   # dool command line
+   dool_io="dool $dool_io_flags --output $OUTPUTFILE_io $linterval $count"
+   dool_process="dool $dool_proc_flags --output $OUTPUTFILE_proc $linterval $count"
+   dool_sys="dool $dool_sys_flags --output $OUTPUTFILE_sys $linterval $count"
 
-###-- Main 
-bkground_dool ${dool_process}
-bkground_dool ${dool_io}
-bkground_dool ${dool_sys}
+   ###-- Main 
+   bkground_dool ${dool_process}
+   bkground_dool ${dool_io}
+   bkground_dool ${dool_sys}
 
-```
+   ```
 
 ---
 
