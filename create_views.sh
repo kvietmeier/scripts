@@ -1,0 +1,28 @@
+#!/bin/bash
+### Create NFS Views on a VAST cluster
+### Need vcli installed
+
+# Define policy name
+POLICY_NAME="NFS_policy"
+HOST="10.100.2.555"
+USER="admin"
+PASS="foobar"
+
+# Create an NFS view policy
+#vcli -H $HOST -u $USER -p $PASS -c "viewpolicy create --name $POLICY_NAME --flavor NFS --auth-source RPC_AND_PROVIDERS --access-flavor ALL"
+
+# Verify policy creation
+echo "Created NFS view policy: $POLICY_NAME"
+
+Policy_id=$(vcli -H $HOST -u $USER -p $PASS -c "viewpolicy list" | grep $POLICY_NAME | awk '{print $2}')
+echo $Policy_id
+
+# Loop to create 6 NFS views (nfs1 to nfs6)
+for i in {1..6}; do
+    VIEW_PATH="/nfs$i"
+    echo "Creating NFS view: $VIEW_PATH"
+#    vcli -H $HOST -u $USER -p $PASS -c "view create --path $VIEW_PATH --protocols NFS --policy-id 5 --create-dir"
+done
+
+# Verify views
+echo "Created NFS views"
