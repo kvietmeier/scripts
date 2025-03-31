@@ -4,11 +4,13 @@
 
 Bash, ksh, csh, and misc Linux utilities. 
 
-I may add my cloiud-init scripts here as well but if you want to see them now they are in the Terraform repo.
+I may add my cloud-init scripts here as well but if you want to see them now they are in the Terraform repo.
 
 ---
 
 #### NOTES:
+
+Recently added scripts for GCP.
 
 ---
 
