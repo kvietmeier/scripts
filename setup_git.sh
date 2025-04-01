@@ -20,31 +20,31 @@ install_git() {
 install_git
 
 ###--- Variables
-your_name = "Frank Herbert"
-user_name = "myusername"
-your_email = "myemail@server.com"
-editor = "vim"
-branch = "main"
-path2token = "<path>
+your_name="Frank Herbert"
+user_name="myusername"
+your_email="myemail@server.com"
+editor="vim"
+branch="main"
+path2token="$HOME/.pat.tmp"
 
 
 # Configure Git user name and email
 echo "Configuring Git user name and email..."
-git config --global user.name $your_name
-git config --global user.email $your_email
+git config --global user.name "$your_name"
+git config --global user.email "$your_email"
 
 # Set other helpful Git global settings
 echo "Setting up Git global settings..."
-git config --global core.editor $editor
-git config --global init.defaultBranch $branch
+git config --global core.editor "$editor"
+git config --global init.defaultBranch "$branch"
 
 # Add PAT from a local file or environment variable
 if [ -f "$path2token" ]; then
     echo "Using PAT from file..."
     PAT=$(cat "$path2token")
-elif [ ! -z "$PAT_TOKEN" ]; then
+elif [ -n "$PAT_TOKEN" ]; then
     echo "Using PAT from environment variable..."
-    PAT=$PAT_TOKEN
+    PAT="$PAT_TOKEN"
 else
     echo "No PAT found. Please create a .pat_token file or set the PAT_TOKEN environment variable."
     exit 1
@@ -52,8 +52,8 @@ fi
 
 # Add PAT to Git credential manager
 echo "Adding PAT to credential manager..."
-echo "https://${user_name}:${PAT}@github.com" > ~/.git-credentials
-git config --global credential.helper store
+git credential reject "https://github.com"  # Clear any previous credentials
+echo "https://${user_name}:${PAT}@github.com" | git credential approve
 
 # Verify Git installation and configuration
 echo "Git and PAT have been set up. Here are the details:"
