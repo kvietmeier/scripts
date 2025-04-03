@@ -6,7 +6,7 @@
 NAME="protocolsPool"  # Change this as needed
 CIDR="24" # Change to your subnet
 GW="10.100.2.1" # Gateway IP
-IP_RANGE="10.100.2.80,10.100.2.85" # Define VIP range
+IP_RANGE="10.100.2.70,10.100.2.75" # Define VIP range
 ROLE="PROTOCOLS" # Network interface
 
 # Load credentials from a secure file
