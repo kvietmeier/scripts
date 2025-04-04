@@ -1,4 +1,6 @@
 #!/bin/bash
-HOST="10.100.2.nnn"
+## VAST login creds
+# VMS IP
+HOST="10.100.2.000"
 USER="admin"
-PASS="123456"
+PASS="11111"

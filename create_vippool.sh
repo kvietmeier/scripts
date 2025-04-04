@@ -6,11 +6,11 @@
 NAME="protocolsPool"  # Change this as needed
 CIDR="24" # Change to your subnet
 GW="10.100.2.1" # Gateway IP
-IP_RANGE="10.100.2.70,10.100.2.75" # Define VIP range
+IP_RANGE="10.100.2.201,10.100.2.206" # Define VIP range
 ROLE="PROTOCOLS" # Network interface
 
 # Load credentials from a secure file
-CRED_FILE="$HOME/.vast_creds.conf"
+CRED_FILE="$HOME/vast_creds.sh"
 
 # Check if the credentials file exists
 if [[ ! -f "$CRED_FILE" ]]; then
