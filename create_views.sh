@@ -73,8 +73,7 @@ VIP_POOL_ID=$(vcli -H "$HOST" -u "$USER" -p "$PASS" -c "vippool list" 2>/dev/nul
 ###=====================================================================###
 echo "Creating NFS view policy: $POLICY_NAME"
 
-vcli -H "$HOST" -u "$USER" -p "$PASS" -c \
-    "viewpolicy create --name $POLICY_NAME --flavor $FLAVOR --auth-source $AUTH_SRC --access-flavor $ACCESS_FLAV --permission-per-vip-pool ${VIP_POOL_ID}=RW" > /dev/null
+vcli -H "$HOST" -u "$USER" -p "$PASS" -c "viewpolicy create --name $POLICY_NAME --flavor $FLAVOR --auth-source $AUTH_SRC --access-flavor $ACCESS_FLAV --permission-per-vip-pool ${VIP_POOL_ID}=RW" > /dev/null
 
 if [[ $? -ne 0 ]]; then
     echo "Error: Failed to create NFS view policy." >&2
