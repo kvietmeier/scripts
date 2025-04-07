@@ -1,6 +1,16 @@
 #!/bin/bash
-### Create NFS Views on a VAST cluster
-### Requires vcli installed
+###=====================================================================###
+###
+### Configure VAST Cluster
+###
+### Create: 
+###   VIP Pool
+###   View Policy mapped to pool
+###   n Number of Views
+###
+###=====================================================================###
+
+
 
 ###============================= Variables =============================###
 
@@ -64,7 +74,7 @@ VIP_POOL_ID=$(vcli -H "$HOST" -u "$USER" -p "$PASS" -c "vippool list" 2>/dev/nul
 echo "Creating NFS view policy: $POLICY_NAME"
 
 vcli -H "$HOST" -u "$USER" -p "$PASS" -c \
-    "viewpolicy create --name $POLICY_NAME --flavor $FLAVOR --auth-source $AUTH_SRC --access-flavor $ACCESS_FLAV" > /dev/null
+    "viewpolicy create --name $POLICY_NAME --flavor $FLAVOR --auth-source $AUTH_SRC --access-flavor $ACCESS_FLAV --permission-per-vip-pool ${VIP_POOL_ID}=RW" > /dev/null
 
 if [[ $? -ne 0 ]]; then
     echo "Error: Failed to create NFS view policy." >&2
