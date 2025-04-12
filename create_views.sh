@@ -3,9 +3,11 @@
 ###
 ### Configure VAST Cluster
 ###
+### Created By: Karl Vitemeier, Cloud Solutions Architect - VAST Data  
+###
 ### Create: 
-###   VIP Pool
-###   View Policy mapped to pool
+###   VIP Pools - Protocol and Replication
+###   View Policy mapped to Protocol pool
 ###   n Number of Views
 ###
 ###=====================================================================###
