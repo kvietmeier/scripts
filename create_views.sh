@@ -10,6 +10,10 @@
 ###   View Policy mapped to Protocol pool
 ###   n Number of Views
 ###
+### Requires - 
+###  File "vasdt_creds" to exist in a directory 1 up from Ansible (so it doesn't end up in githib repos)
+###  Edit as needed - $HOST is the IPhostname of the VMS.
+###
 ###=====================================================================###
 
 
