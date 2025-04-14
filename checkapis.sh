@@ -23,7 +23,6 @@ REQUIRED_APIS=(
     "Artifact Registry"
     "Cloud Build API"
 	"Compute Engine API"
-	"Compute Engine Instance Group Manager API"
 	"Network Management API"
 	"Service Networking API"
 	"Network Security API"
