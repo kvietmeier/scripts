@@ -1,9 +1,17 @@
 #!/usr/bin/bash
 # Get CPU type from hosts
 # 
+#!/bin/bash
 
-for i in {2..5}
-do  	
-  cpu=$(ssh ubuntu@vdb-0$i "cat /proc/cpuinfo | sed -n -E '/^model\s*(name|)\s*:/{s/.*:\s*//;p}' | head -n2 | tr '\n\n' ':'")
-  echo "vdb-0$i:  $cpu"
+USER="labuser"
+HOST_PREFIX="linux0"
+HOST_COUNT=6
+
+for i in $(seq 1 $HOST_COUNT); do
+  HOST="${HOST_PREFIX}${i}"
+  
+  cpu=$(ssh "${USER}@${HOST}" \
+    "grep -m2 'model name' /proc/cpuinfo | sed -E 's/.*: //' | tr '\n' ':'")
+  
+  echo "${HOST}:  ${cpu}"
 done

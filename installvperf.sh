@@ -1,6 +1,6 @@
 #!/bin/bash
 ### Install and run vperfsanity on a VAST cluster
-### Run this on any node as the standard user
+### Run this on any cnode as the standard user
 ###
 
 VIP_pool="protocolsPool"
