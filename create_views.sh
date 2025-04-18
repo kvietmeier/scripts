@@ -23,16 +23,22 @@
 CRED_FILE="$HOME/vast_creds"
 
 # VIP Pool parameters
+# For VoC - the VIP Pools can't overlap any existing subnets
 VIP1_NAME="DataSharesPool"
-IP_RANGE1="10.100.2.201,10.100.2.212"
+GW1="33.20.1.1"
+IP_RANGE1="33.20.1.10,33.20.1.21"  # 12 4/cnode
+#IP_RANGE1="33.20.1.10,33.20.1.33"  # 24
+#IP_RANGE1="33.20.1.10,33.20.1.45"  # 36
 ROLE1="PROTOCOLS"
 VIP2_NAME="ReplicationPool"
-IP_RANGE2="10.100.2.221,10.100.2.226"
+GW2="33.21.1.1"
+IP_RANGE2="33.21.1.10,33.21.1.15" # 6   2/cnode
+#IP_RANGE2="33.21.1.10,33.21.1.21" # 12  
+#IP_RANGE2="33.21.1.10,33.21.1.27" # 18
 ROLE2="REPLICATION"
 
 # Common
 CIDR="24"
-GW="10.100.2.1"
 
 # View Policy parameters
 FLAVOR="MIXED_LAST_WINS"
@@ -68,7 +74,7 @@ echo "Creating VIP Pool: $NAME with range: $IP_RANGE1"
 vcli -H "$HOST" -u "$USER" -p "$PASS" -c \
     "vippool create --name $VIP1_NAME \
     --subnet-cidr $CIDR \
-    --gw-ip $GW \
+    --gw-ip $GW1\
     --ip-ranges $IP_RANGE1 \
     --role $ROLE1" > /dev/null
 
@@ -80,7 +86,7 @@ fi
 vcli -H "$HOST" -u "$USER" -p "$PASS" -c \
     "vippool create --name $VIP2_NAME \
     --subnet-cidr $CIDR \
-    --gw-ip $GW \
+    --gw-ip $GW2\
     --ip-ranges $IP_RANGE2 \
     --role $ROLE2" > /dev/null
 
