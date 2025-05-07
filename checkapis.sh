@@ -1,9 +1,14 @@
 #!/bin/bash
 ###==========================================================================================================### 
-###
-###  For GCP:
-###  Check from a list of required APIs whether they are enabled or not.
-###
+#
+#  For GCP:
+#  Check from a list of required APIs whether they are enabled or not.
+#
+#   Created by: Karl Vietmeier
+#   License: Apache License 2.0
+#   SPDX-License-Identifier: Apache-2.0
+#   Copyright 2025 Karl Vietmeier
+#
 ###==========================================================================================================### 
 
 
