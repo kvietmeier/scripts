@@ -26,6 +26,9 @@ Terraform will fail until the cluster returns ONLINE
 
 Credits:
 Modified from the original script created by: 
+    Karl Vietmeier - VAST Data Cloud Solutions Architect
+
+    Original Author:
     Casey Golliher - VAST Data Customer Success
 """
 
