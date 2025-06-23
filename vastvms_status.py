@@ -25,7 +25,7 @@ Motivation:
 Terraform will fail until the cluster returns ONLINE
 
 Credits:
-Modified from the original script created by: 
+Modified from the original script by: 
     Karl Vietmeier - VAST Data Cloud Solutions Architect
 
     Original Author:
