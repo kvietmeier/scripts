@@ -2,7 +2,7 @@
 
 ---
 
-Bash, ksh, csh, and misc Linux utilities. 
+Bash, ksh, csh, python, and misc Linux utilities. 
 
 I may add my cloud-init scripts here as well but if you want to see them now they are in the Terraform repo.
 
@@ -10,7 +10,7 @@ I may add my cloud-init scripts here as well but if you want to see them now the
 
 #### NOTES:
 
-Recently added scripts for GCP.
+Recently added scripts for GCP and VAST Data Clusters.
 
 ---
 
@@ -120,5 +120,3 @@ Drop this in your cloud-init file:
 ```
 
 ---
-
-
