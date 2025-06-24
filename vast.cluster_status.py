@@ -13,16 +13,21 @@
 # limitations under the License.
 #
 """
-Original script: Test whether a VAST Cluster VMS is responding to API calls - is it installed and running?
+Original Script:
+  Test whether a VAST Cluster VMS is responding to API calls - is it installed and running?
 
-Modified to return the raw `state` field from /api/clusters/
-INSTALLING
-INIT
-ACTIVATING
-ONLINE
+Updated Version:
+  Is the cluster itself online and reasdy for configuration?
+
+It returns the `state` field from /api/clusters/ as it transitions through each phase:
+  * INSTALLING
+  * INIT
+  * ACTIVATING
+  * ONLINE
 
 Motivation:
-Terraform will fail until the cluster returns ONLINE
+  The VMS will respond to API calls as soon as it is running but the cluster won't 
+  accept configuration commands until it is ONLINE. 
 
 Credits:
 Modified from the original script by: 
