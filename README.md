@@ -1,24 +1,28 @@
-### Misc Linux Scripting Projects
+### Linux Scripting Projects
+
+A collection of practical Bash and shell scripting tools designed to automate and streamline common system administration tasks across Linux environments.
+
+Created and maintained by Karl Vietmeier / KCV Consulting
+Licensed under the Apache License 2.0
 
 ---
 
-Bash, ksh, csh, python, and misc Linux utilities. 
+Bash, ksh, csh, python, and misc Linux utilities.
 
 I may add my cloud-init scripts here as well but if you want to see them now they are in the Terraform repo.
 
 ---
 
-#### NOTES:
+#### NOTES
 
 Recently added scripts for GCP and VAST Data Clusters.
 
 ---
 
-dool: dstat has been replaced by "dool" - csv output is broken and dstat is no longer active.
+**dool**: dstat has been replaced by "dool" - csv output is broken and dstat is no longer active.
 
 * [Dool GitHub](https://github.com/scottchiefbaker/dool/blob/master/README.md)
 * [Use Alien](https://www.serverlab.ca/tutorials/linux/administration-linux/how-install-rpm-packages-on-ubuntu-using-alien/)
-
 
 * Install dool with Ansible
 
