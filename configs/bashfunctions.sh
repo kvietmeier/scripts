@@ -1,4 +1,44 @@
 #!/bin/bash
+#====================================================================================================#
+# Script Name: bashfunctions.sh
+#
+# Purpose:
+#   Provides helper functions for common Terraform operations and Google Cloud Platform (GCP)
+#   authentication management. This script is intended to be sourced in your shell to make
+#   infrastructure workflows more efficient.
+#
+# Features:
+#   Terraform Helpers:
+#     - tfapply     : Runs `terraform apply` with all `.tfvars` files in the current directory.
+#     - tfdestroy   : Runs `terraform destroy` with all `.tfvars` files in the current directory.
+#     - tfplan      : Runs `terraform plan` with all `.tfvars` files in the current directory.
+#     - tfshow      : Displays the current Terraform state.
+#     - tfinit      : Initializes the current Terraform working directory.
+#     - tfaks2      : Custom apply/destroy for `aks2` with a specified `.tfvars` file.
+#
+#   GCP Authentication:
+#     - gcp_auth    : Loads credentials from $HOME/.gcp/.gcp_env, activates the service account,
+#                     sets the default GCP project, and validates access.
+#     - gcp_deauth  : Clears GCP authentication from the environment and local gcloud session.
+#
+# Usage:
+#   source ./terraform_gcp_utils.sh
+#   tfapply
+#   gcp_auth
+#
+# Requirements:
+#   - Terraform CLI installed and available in PATH.
+#   - Google Cloud SDK (gcloud) installed and available in PATH.
+#   - A valid GCP service account key file and project ID defined in:
+#       $HOME/.gcp/.gcp_env
+#       Example:
+#         export GOOGLE_APPLICATION_CREDENTIALS="$HOME/.gcp/key-file.json"
+#         export GCP_DEFAULT_PROJECT="my_gcp_project"
+#
+# Notes:
+#   - Terraform functions automatically detect all `.tfvars` files in the current directory.
+#   - GCP authentication requires `~/.gcp/.gcp_env` to exist and be correctly configured.
+#====================================================================================================#
 
 #====================================================================================================#
 #--- Terraform Related
@@ -74,13 +114,12 @@ function tfaks2() {
 #====================================================================================================#
 
 gcp_auth() {
-  # Example creds file in $HOME/.gcp
+  # Example creds file in $HOME/.foo
   # GCP Credentials for function
-  # ~/.gcp_env
-  # export GOOGLE_APPLICATION_CREDENTIALS="$HOME/.gcp/key-file.json"
+  # export GOOGLE_APPLICATION_CREDENTIALS="$HOME/.foo/key-file.json"
   # export GCP_DEFAULT_PROJECT="my_gcp_project"
   
-  local env_file="$HOME/.gcp/.gcp_env"
+  local env_file="$HOME/.foo/.foo_env"
 
   # Require env file
   if [ ! -f "$env_file" ]; then
