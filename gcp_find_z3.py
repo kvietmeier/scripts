@@ -1,3 +1,32 @@
+#!/usr/bin/env python3
+"""
+===============================================================================
+Title       : gcp_find_z3.py
+Author      : Karl Vietmeier
+Created     : 2025-09-05
+License     : Apache License 2.0
+Description : 
+    This script performs a dry-run check to verify which GCP zones support 
+    the 'z3-highmem-88-highlssd' machine type. It uses the Google Compute 
+    Engine API via `googleapiclient` and relies on existing `gcloud` 
+    authentication credentials.
+
+    The script is currently hard-coded with a list of valid zones where the
+    machine type is available. For each zone, it attempts to query the 
+    machine type and prints PASS if available, otherwise FAIL with a 
+    descriptive error.
+
+===============================================================================
+Usage:
+    python3 gcp_find_z3.py
+
+Notes:
+    - Requires `google-api-python-client` to be installed:
+        pip3 install google-api-python-client
+    - Must be authenticated via gcloud:
+        gcloud auth application-default login
+"""
+
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
