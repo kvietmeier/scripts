@@ -16,6 +16,10 @@ Description :
     machine type and prints PASS if available, otherwise FAIL with a 
     descriptive error.
 
+Use this to get the list of valid zones:
+gcloud compute machine-types list --filter="name:z3-highmem-88-highlssd" --format="table[box](zone, name)"
+
+
 ===============================================================================
 Usage:
     python3 gcp_find_z3.py
@@ -29,8 +33,11 @@ Notes:
 
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from google.auth import default
 
-PROJECT_ID = "clouddev-itdesk124"
+# Get credentials and default project
+credentials, PROJECT_ID = default()
+
 MACHINE_TYPE = "z3-highmem-88-highlssd"
 
 # Hard-coded valid zones
@@ -54,7 +61,7 @@ VALID_ZONES = [
 ]
 
 # Build the Compute service client (uses gcloud credentials automatically)
-service = build('compute', 'v1')
+service = build('compute', 'v1', credentials=credentials)
 
 print("Dry-run results for creating 11 VMs of z3-highmem-88-highlssd\n")
 print(f"{'ZONE':<25} {'RESULT'}")
