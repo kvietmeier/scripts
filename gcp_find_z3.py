@@ -7,40 +7,26 @@ Created     : 2025-09-05
 License     : Apache License 2.0
 Description : 
     This script performs a dry-run check to verify which GCP zones support 
-    the 'z3-highmem-88-highlssd' machine type. It uses the Google Compute 
-    Engine API via `googleapiclient` and relies on existing `gcloud` 
-    authentication credentials.
+    creating multiple 'z3-highmem-88-highlssd' VMs. It uses `gcloud` CLI with 
+    --dry-run to validate quota, permissions, and capacity.
 
-    The script is currently hard-coded with a list of valid zones where the
-    machine type is available. For each zone, it attempts to query the 
-    machine type and prints PASS if available, otherwise FAIL with a 
-    descriptive error.
-
-Use this to get the list of valid zones:
-gcloud compute machine-types list --filter="name:z3-highmem-88-highlssd" --format="table[box](zone, name)"
-
-
-===============================================================================
 Usage:
     python3 gcp_find_z3.py
 
 Notes:
-    - Requires `google-api-python-client` to be installed:
-        pip3 install google-api-python-client
-    - Must be authenticated via gcloud:
+    - Requires gcloud CLI installed and authenticated:
         gcloud auth application-default login
+    - Dry-run does not actually create any instances.
+===============================================================================
 """
 
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-from google.auth import default
+import subprocess
 
-# Get credentials and default project
-credentials, PROJECT_ID = default()
-
+PROJECT_ID = "YOUR_PROJECT_ID"  # Replace with your GCP project ID
 MACHINE_TYPE = "z3-highmem-88-highlssd"
+NUM_VMS = 1
 
-# Hard-coded valid zones
+# Hard-coded valid zones (do not modify)
 VALID_ZONES = [
     "us-central1-a","us-central1-c","us-central1-f","us-central1-d",
     "europe-west1-b","europe-west1-c","europe-west1-d",
@@ -60,25 +46,33 @@ VALID_ZONES = [
     "europe-north2-a","europe-north2-b"
 ]
 
-# Build the Compute service client (uses gcloud credentials automatically)
-service = build('compute', 'v1', credentials=credentials)
-
-print("Dry-run results for creating 11 VMs of z3-highmem-88-highlssd\n")
+print(f"Dry-run results for creating {NUM_VMS} VMs of {MACHINE_TYPE}\n")
 print(f"{'ZONE':<25} {'RESULT'}")
 print("-"*50)
 
 for zone in VALID_ZONES:
-    try:
-        # Dry-run: check machine type exists
-        request = service.machineTypes().get(
-            project=PROJECT_ID,
-            zone=zone,
-            machineType=MACHINE_TYPE
-        )
-        request.execute()
+    cmd = [
+        "gcloud", "compute", "instances", "create",
+        "dry-run-test",  # temporary instance name
+        f"--project={PROJECT_ID}",
+        f"--zone={zone}",
+        f"--machine-type={MACHINE_TYPE}",
+        "--image-family=debian-11",
+        "--image-project=debian-cloud",
+        "--no-address",
+        "--quiet",
+        "--dry-run"
+    ] + ["--count", str(NUM_VMS)]  # simulate multiple VMs
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    
+    if result.returncode == 0:
         print(f"{zone:<25} PASS")
-    except HttpError as e:
-        if e.resp.status == 403:
+    else:
+        stderr = result.stderr.strip()
+        if "Quota" in stderr or "permission" in stderr:
             print(f"{zone:<25} FAIL: Quota or permission issue")
-        else:
+        elif "does not exist" in stderr or "Invalid" in stderr:
             print(f"{zone:<25} FAIL: Invalid machine type")
+        else:
+            print(f"{zone:<25} FAIL: Bad request / capacity issue")
