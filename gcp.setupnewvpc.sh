@@ -2,7 +2,7 @@
 #===========================================================
 # File: setup_voc_vpc_multi.sh
 # Description: Creates a multi-region custom VPC for VAST on Cloud.
-#              - 3 subnets in 3 regions
+#              - 3 subnets in 3 regions (expandable)
 #              - Cloud Routers + NAT in each region
 #              - Private Google Access enabled on all subnets
 #              - Global firewall rules for RFC1918, GCP services, and VAST ports
@@ -11,14 +11,44 @@
 #   Copyright (c) 2025 Karl Vietmeier
 #   Permission is granted to use, copy, modify, and distribute this script
 #   for any purpose without fee, provided the above notice appears in all copies.
+#
+# Required Permissions / Roles:
+#   - VPC & Subnets: compute.networks.create, compute.networks.update,
+#     compute.subnetworks.create, compute.subnetworks.update
+#   - Routers & NAT: compute.routers.create, compute.routers.update, compute.routers.get, compute.routers.list
+#   - Firewall Rules: compute.firewalls.create, compute.firewalls.update, compute.firewalls.get, compute.firewalls.list
+#   - API Enablement: serviceusage.services.enable
+#   - General: resourcemanager.projects.get
+#
+#   Simplest: If you are a Project Owner in your GCP project, you already have all required permissions.
 #===========================================================
+
 
 set -euo pipefail
 
 #===========================================================
+# Ensure gcloud is authenticated
+#===========================================================
+if ! gcloud auth list --filter=status:ACTIVE --format="value(account)" | grep . >/dev/null; then
+  echo "ERROR: No active gcloud account. Please run 'gcloud auth login' or activate a service account."
+  exit 1
+fi
+
+
+#===========================================================
+# Get current GCP project
+#===========================================================
+PROJECT_ID=$(gcloud config get-value project 2>/dev/null || true)
+if [[ -z "$PROJECT_ID" ]]; then
+  echo "ERROR: Failed to get current GCP project. Please run 'gcloud config set project PROJECT_ID' first."
+  exit 1
+fi
+echo "Using GCP project: $PROJECT_ID"
+
+
+#===========================================================
 # Configurable variables
 #===========================================================
-PROJECT_ID=$(gcloud config get-value project)
 VPC_NAME="voc-vpc"
 PORT_FILE="./vast_ports.txt"
 
