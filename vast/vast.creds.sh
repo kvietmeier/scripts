@@ -1,6 +1,6 @@
 #!/bin/bash
 ## VAST login creds
-# VMS IP
-HOST="10.100.2.000"
+# VMS  - Assumes VMS is in /etc/hosts
+HOST="vms"
 USER="admin"
 PASS="11111"

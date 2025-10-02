@@ -15,7 +15,21 @@ I may add my cloud-init scripts here as well but if you want to see them now the
 
 #### NOTES
 
-Recently added scripts for GCP and VAST Data Clusters.
+Recently added scripts for GCP, AWS, and VAST Data Clusters.
+
+
+Folders:
+```text
+.
+├── archive
+├── aws
+├── env_setup
+├── Examples
+├── fio
+├── gcp
+└── vast
+```
+
 
 ---
 
