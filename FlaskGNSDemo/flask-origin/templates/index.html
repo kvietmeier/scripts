@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>VAST GNS Demo - Image List</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .image-row { margin-bottom: 30px; }
+        img { max-width: 600px; border: 1px solid #ccc; margin-right: 15px; vertical-align: middle; }
+        button { padding: 8px 15px; font-size: 14px; cursor: pointer; }
+        .processed { color: green; font-weight: bold; margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <h1>VAST GNS Demo - Images</h1>
+
+{% for img in images %}
+<div class="image-row">
+    <strong>Original:</strong><br/>
+    <img src="{{ url_for('image_file', filename=img.filename) }}" alt="{{ img.filename }}" width="600" />
+    <br/>
+    <strong>Processed:</strong><br/>
+    {% if img.processed %}
+        <img src="{{ url_for('processed_file', filename=img.processed_name) }}" alt="processed {{ img.filename }}" width="600" />
+        <span class="processed">[Processed]</span>
+    {% else %}
+        <em>No processed image yet</em>
+    {% endif %}
+    <br/><br/>
+    <form action="{{ url_for('process_image', filename=img.filename) }}" method="get">
+        <button type="submit">Process</button>
+    </form>
+</div>
+<hr/>
+{% endfor %}
+<script>
+  let lastCount = null;
+
+  async function checkForNewImages() {
+    try {
+      const response = await fetch('/api/image_count');
+      const data = await response.json();
+
+      if (lastCount !== null && data.count !== lastCount) {
+        // New images added or removed — reload the page
+        window.location.reload();
+      }
+      lastCount = data.count;
+    } catch (err) {
+      console.error('Error checking image count:', err);
+    }
+  }
+
+  // Check every 10 seconds
+  setInterval(checkForNewImages, 10000);
+
+  // Initial check on page load
+  checkForNewImages();
+</script>
+</body>
+</html>
