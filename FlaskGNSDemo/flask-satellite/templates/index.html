@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>VAST GNS Demo - Satellite</title>
+    <title>VAST GNS Demo - {{ app_role | capitalize }} Server</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         .image-row { margin-bottom: 30px; }
@@ -12,7 +12,7 @@
     </style>
 </head>
 <body>
-<h1>VAST GNS Demo - Images</h1>
+    <h1>VAST GNS Demo - {{ app_role | capitalize }} View</h1>
 
 {% for img in images %}
 <div class="image-row">
@@ -27,37 +27,77 @@
         <em>No processed image yet</em>
     {% endif %}
     <br/><br/>
+    
+    {% if app_role == 'editor' %}
     <form action="{{ url_for('process_image', filename=img.filename) }}" method="get">
         <button type="submit">Process</button>
     </form>
+    {% else %}
+    <span style="color: gray;">(Processing handled by Editor server)</span>
+    {% endif %}
+
 </div>
 <hr/>
 {% endfor %}
 
 <script>
-let previousCount = null;
+    let lastOriginalCount = 0;
+    let lastProcessedCount = 0;
+    const pollingInterval = 5000; // Check every 5 seconds (more responsive)
 
-async function checkForImageChanges() {
-    try {
-        const response = await fetch("/api/image_count");
-        const data = await response.json();
-
-        if (data.count !== undefined) {
-            if (previousCount !== null && data.count !== previousCount) {
-                location.reload(); // refresh page if image count changed
+    async function checkForImageChanges() {
+        try {
+            // Fetch the TWO-PART count from the updated /api/image_count route
+            const response = await fetch('{{ url_for("image_count") }}');
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
             }
-            previousCount = data.count;
+            const data = await response.json();
+            
+            const currentOriginalCount = data.original_count;
+            const currentProcessedCount = data.processed_count;
+
+            // 1. Initial Load Setup
+            if (lastOriginalCount === 0 && lastProcessedCount === 0) {
+                lastOriginalCount = currentOriginalCount;
+                lastProcessedCount = currentProcessedCount;
+                return;
+            }
+            
+            let needsReload = false;
+
+            // 2. Check for New Original Image (Producer Action)
+            if (currentOriginalCount !== lastOriginalCount) {
+                console.log('Original image count changed (New image added). Reloading.');
+                needsReload = true;
+            }
+
+            // 3. Check for New Processed Image (Process button clicked)
+            if (currentProcessedCount !== lastProcessedCount) {
+                console.log('Processed image count changed (Status updated). Reloading.');
+                needsReload = true;
+            }
+
+            // 4. Perform Reload
+            if (needsReload) {
+                // Ensure a full, uncached reload
+                window.location.reload(true); 
+            }
+
+            // 5. Update counts for the next poll
+            lastOriginalCount = currentOriginalCount;
+            lastProcessedCount = currentProcessedCount;
+            
+        } catch (err) {
+            console.error('Error checking image count:', err);
         }
-    } catch (err) {
-        console.error("Failed to check image count:", err);
     }
-}
 
-// Poll every 10 seconds
-setInterval(checkForImageChanges, 10000);
+    // Start polling every 5 seconds
+    setInterval(checkForImageChanges, pollingInterval);
 
-// Initial count load
-checkForImageChanges();
+    // Initial check on page load
+    checkForImageChanges();
 </script>
 
 </body>
