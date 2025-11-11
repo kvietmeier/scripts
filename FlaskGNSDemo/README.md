@@ -1,12 +1,47 @@
-### Source Files for a Flask based Globalnamespace demo
+### VAST GNS Real-Time Image Annotation Workflow Demo
 
-This demo uses a lightweight web-based image annotation workflow powered by Python, Flask, and Pillow, running on top of VAST Data’s Global Namespace (GNS).  It demonstrates how shared data access and live updates work seamlessly across geographically distributed clients by mounting the same GNS-backed view on multiple systems.  
+A Python/Flask application demonstrating **real-time data synchronization** and **distributed collaboration** across a **VAST Data Global Namespace (GNS)**.  
+
+It demonstrates how shared data access and live updates work seamlessly across geographically distributed clients by mounting the same GNS-backed view on multiple systems.   
+
+### Overview
+This demo simulates a **Producer-Consumer workflow** (e.g., an X-Ray Lab generating files and a remote Radiology Technician annotating them). Two distinct web applications (Producer and Editor) run on separate VAST clusters but access the exact same dataset mounted via GNS, ensuring **real-time data consistency** and collaborative updates without manual refreshing.
+
+### Key Technologies
+* **Backend Storage:** VAST Data Global Namespace (GNS)
+* **Web Framework:** Flask (Python)
+* **Image Processing:** Pillow (`PIL`)
+* **Real-time Updates:** Client-side polling using JavaScript.
 
 ---
 
-#### Notes
+### Architecture and Setup
 
-#### Requirements
+The application is designed to run on **two separate servers** (Producer and Editor), both configured to mount the same VAST GNS view.
+
+### Prerequisites
+* Python 3.8+
+* `flask`, `Pillow` (Dependencies are installed via `virtual_env.sh`).
+* The VAST GNS share must be mounted on both systems at: `/mnt/vast/gns_demo/`.
+
+### 1. File Structure
+
+```text
+flask-origin/ 
+├── app.py            # Main Flask application and logic 
+├── virtual_env.sh    # Setup script for Python environment 
+└── templates/ 
+   └── index.html     # Frontend UI with dynamic logic and polling
+```
+
+### 2. Configure Server Role (Crucial Step)
+
+The `app.py` file must be edited on each server to define its role via the `APP_ROLE` variable near the top of the file:
+
+| Server | Role | `app.py` Setting | Functionality |
+| :--- | :--- | :--- | :--- |
+| **Producer** | Data Generator | `APP_ROLE = 'producer'` | View-only; hides the "Process" button. |
+| **Editor** | Annotator/Consumer | `APP_ROLE = 'editor'` | Displays the "Process" button; runs the annotation logic. |
 
 ---
 
