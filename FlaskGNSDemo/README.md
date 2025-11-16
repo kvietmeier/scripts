@@ -51,11 +51,14 @@ flask_satellite
 ├── templates
 │   └── index.html
 └── vastmount.txt
+
+GNS_FlaskDemo.tar.gz
 ```
 
 * Dataset: Source images
 * flask_origin:  For origin server
 * flask_satellite: For satellite server
+* GNS_FlaskDemo.tar.gz: This folder
 
 #### 2. Configure Server Role (Crucial Step)
 
