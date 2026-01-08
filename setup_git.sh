@@ -7,6 +7,8 @@
 #
 
 set -euo pipefail
+
+### Variables
 IFS=$'\n\t'
 
 # --- Functions ---
@@ -95,9 +97,9 @@ main() {
         echo "Git is already installed: $(git --version)"
     fi
 
-    #configure_git
-    prepare_projects_dir
-    clone_repos_from_file
+    configure_git
+    #prepare_projects_dir
+    #clone_repos_from_file
 
     echo -e "\nGit setup complete!"
     git --version
