@@ -101,13 +101,10 @@ install_performance_tools() {
     local GIT_DIR="/root/git"
     mkdir -p "$GIT_DIR"
 
-    # Internal helper: _build "URL" "DIR_NAME" "BUILD_CMDS"
     _build() {
         local url=$1 dir=$2 cmd=$3
         cd "$GIT_DIR"
 
-        # Logic: If directory exists, skip cloning/building. 
-        # To recompile: delete the directory before running script.
         if [ -d "$dir" ]; then
             log_status ">>> [SKIP] $dir directory found. Skipping recompile."
         else
@@ -118,35 +115,41 @@ install_performance_tools() {
                 log_status ">>> [SUCCESS] $dir installed."
             else
                 log_status "!!! [ERROR] FAILED building $dir"
-                # Remove directory on failure so next run can try again
                 cd "$GIT_DIR" && rm -rf "$dir"
                 return 1
             fi
         fi
     }
 
-    # DOOL
+    # 1. DOOL
     _build "https://github.com/scottchiefbaker/dool.git" "dool" "./install.py"
 
-    # FIO
+    # 2. FIO
     _build "https://github.com/axboe/fio.git" "fio" "./configure && make -j$(nproc) && make install"
 
-    # iPerf
+    # 3. iPerf
     _build "https://github.com/esnet/iperf.git" "iperf" "./configure && make -j$(nproc) && make install && echo '/usr/local/lib' > /etc/ld.so.conf.d/iperf.conf && ldconfig"
 
-    # SockPerf
+    # 4. SockPerf
     _build "https://github.com/mellanox/sockperf" "sockperf" "./autogen.sh && ./configure && make -j$(nproc) && make install"
 
-    # Elbencho
-    local EL_CMD="make S3_SUPPORT=1 -j $(nproc)"
+    # 5. Elbencho (With Rocky 9 OpenSSL Fix)
+    # We define the build command with explicit OpenSSL paths for Rocky 9
+    local EL_CMD
     if [ -f /etc/redhat-release ]; then
-        EL_CMD="$EL_CMD && make rpm && dnf install -y ./packaging/RPMS/x86_64/elbencho*.rpm"
+        # Nuke any potential poisoned cache if the directory exists but we're forcing a build
+        # Note: In the current _build logic, this only runs if the dir is new or deleted.
+        EL_CMD="find . -name 'CMakeCache.txt' -delete && \
+                find . -name 'CMakeFiles' -type d -exec rm -rf {} + && \
+                OPENSSL_ROOT_DIR=/usr OPENSSL_LIBRARIES=/usr/lib64 OPENSSL_INCLUDE_DIR=/usr/include \
+                make S3_SUPPORT=1 -j $(nproc) && \
+                make rpm && dnf install -y ./packaging/RPMS/x86_64/elbencho*.rpm"
     else
-        EL_CMD="$EL_CMD && make install"
+        EL_CMD="make S3_SUPPORT=1 -j $(nproc) && make install"
     fi
+    
     _build "https://github.com/breuner/elbencho.git" "elbencho" "$EL_CMD"
 }
-
 ###====================================================================================###
 ### Main Execution
 ###====================================================================================###
