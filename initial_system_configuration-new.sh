@@ -79,23 +79,27 @@ LABUSER_HOME="/home/labuser"
 mkdir -p "$LABUSER_HOME/output" "$LABUSER_HOME/git" "/root/git"
 chown -R labuser:labuser "$LABUSER_HOME"
 
-ALIASES=$(cat <<'EOF'
+USERENV=$(cat <<'EOF'
+### Aliases
 alias la="ls -Av"
+alias ls="ls -hF --color=auto"
 alias l="ls -CFv"
 alias ll='ls -lhvF --group-directories-first'
 alias lla='ls -alhvF --group-directories-first'
-alias ls="ls -hF --color=auto"
 alias grep='grep --color=auto'
 alias cdb='cd -'
 alias cdu='cd ..'
 alias df='df -kh'
 alias du='du -h'
+
+### Settings
 set -o vi
 bind 'set bell-style none'
+
 EOF
 )
-echo "$ALIASES" >> "$LABUSER_HOME/.bashrc"
-echo "$ALIASES" >> /root/.bashrc
+echo "$USERENV" >> "$LABUSER_HOME/.bashrc"
+echo "$USERENV" >> /root/.bashrc
 
 ###====================================================================================###
 ### 4. Package Installation
