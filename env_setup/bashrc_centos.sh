@@ -133,3 +133,6 @@ alias cdu2='cd ../..'
 alias cdu3='cd ../../..'
 alias df='df -kh'
 alias du='du -h'
+
+set -o vi
+bind 'set bell-style none'  
