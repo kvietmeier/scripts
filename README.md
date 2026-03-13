@@ -81,6 +81,33 @@ Folders:
 
 ---
 
+**net_probe.py** -  Monitor Replication Links
+
+In a VAST replication scenario across a cloud uplink, watch for these specific indicators in your CSV:
+
+* **Latency Spikes**: If latency jumps from 5ms to 150ms consistently, you likely have congestion on the ExpressRoute.
+* **Error Code 11** (Resource temporarily unavailable): Often indicates the local system can't open more sockets
+* **Error Code 110** (Connection timed out): This is the "Link Down" indicator. If both ports (49001 and 49002) show this at the same timestamp, the uplink has failed.
+
+Usage examples
+
+49001:
+```bash
+export TARGET_IP=10.x.x.x TARGET_PORT=49001 LOG_FILE=vast_49001.csv
+nohup python3 net_probe.py > monitor_49001.log 2>&1 &
+```
+
+49002:
+```bash
+export TARGET_IP=10.x.x.x TARGET_PORT=49002 LOG_FILE=vast_49002.csv
+nohup python3 net_probe.py > monitor_49002.log 2>&1 &
+```
+
+**Catching Jitter**: Set export INTERVAL=0.1. Jitter often happens in millisecond bursts that a 1-second interval will miss.
+
+
+---
+
 Using FIO:
 
 * [FIO](https://fio.readthedocs.io/en/latest/fio_doc.html)
