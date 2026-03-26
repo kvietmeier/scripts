@@ -18,50 +18,46 @@
 #
 ###=====================================================================================###
 
-
 ###=====================================================================================###
-###---   Azure VMs
-###=====================================================================================###
-
-Host vm01
-    HostName vm01.eastus2.cloudapp.azure.com
-    User azureadmin
-    PasswordAuthentication yes
-
-Host vm02
-    HostName vm02.westus2.cloudapp.azure.com
-    User azureadmin
-    PasswordAuthentication yes
-
-
-###=====================================================================================###
-###---   GCP VMs
+#       Aliases 
 ###=====================================================================================###
 
-
-
-###=====================================================================================###
-###---   AWS VMs
-###=====================================================================================###
-
-
-
-###=====================================================================================###
-###---   Local VMs
-###=====================================================================================###
-
-
-
-###=====================================================================================###
-###              Entries using ncat to tunnel through a SOCKS proxy (Windows)
-###=====================================================================================###
-
-Host vm02-socks
-    HostName vm02.westus2.cloudapp.azure.com
-    ProxyCommand "C:\Program Files (x86)\nmap\ncat.exe" --proxy-type socks5 --proxy proxy-us.intel.com:1080 %h %p
-    User azureuser
+Host devops01
+    HostName 
+    User 
     PasswordAuthentication no
 
+
+###=====================================================================================###
+#                         Aliases for AWS
+###=====================================================================================###
+
+Host target
+    HostName 
+    User ubuntu
+    IdentityFile C:\Users\karlv\.ssh\aws.pem
+    PasswordAuthentication no
+
+Host source
+    HostName 
+    User ubuntu
+    IdentityFile C:\Users\karlv\.ssh\aws.pem
+    PasswordAuthentication no
+
+###=====================================================================================###
+
+
+###=====================================================================================###
+###              Entries using ncat to tunnel through a SOCKS proxy
+###=====================================================================================###
+
+### Windows
+# Host vm02-socks
+#     HostName vm02.westus2.cloudapp.azure.com
+#     ProxyCommand "C:\Program Files (x86)\nmap\ncat.exe" --proxy-type socks5 --proxy proxy-us.intel.com:1080 %h %p
+#     User azureuser
+#     PasswordAuthentication no
+  
 
 ###=====================================================================================###
 #                         Common Settings for all SSH targets            
@@ -78,4 +74,3 @@ Host *
   ForwardAgent yes
   # Send a null packet every 120s
   ServerAliveInterval 120
-
