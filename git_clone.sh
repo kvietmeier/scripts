@@ -1,10 +1,10 @@
 #!/bin/bash
 # ==============================================================================
 # Usage:
-#   ./project-sync.sh <repo_list_file>
+#   ./git_clone.sh <repo_list_file>
 #
 # Example:
-#   ./project-sync.sh repos.txt
+#   ./git_clone.sh repos.txt
 #
 # Description:
 #   Clones all Git repos listed in the provided file into ~/projects.
