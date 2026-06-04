@@ -1,4 +1,10 @@
 #!/bin/bash
+#==============================================================================
+# Script:      nic_diagnostic.sh
+# Description: Captures network and CPU baselines to identify cloud network 
+#              throttling, bandwidth limits, and PPS credit exhaustion.
+# Usage:       ./nic_diagnostic.sh <interface> <duration_in_seconds>
+#==============================================================================
 
 # Usage check
 if [ "$#" -ne 2 ]; then

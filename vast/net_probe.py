@@ -3,8 +3,9 @@
 Copyright 2026 Karl V.
 Licensed under the Apache License, Version 2.0 (the "License");
 
-Can be used for monitoring replication status of VAST nodes by periodically i
-checking TCP connectivity to specified ports. Logs results to a CSV file for later analysis.
+Can be used for monitoring replication status of VAST nodes by 
+periodically checking TCP connectivity to specified ports. 
+Logs results to a CSV file for later analysis.
 
 === EXAMPLE USAGE SUMMARY ===
 1. Primary Link:   export TARGET_IP=[VAST_IP] TARGET_PORT=49001 LOG_FILE=rep_49001.csv
