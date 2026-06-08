@@ -130,7 +130,7 @@ wait_for_locks
 if [ -f /etc/debian_version ]; then
     DEBIAN_FRONTEND=noninteractive apt-get update -y
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        build-essential libboost-dev libssl-dev libncurses-dev libnuma-dev \
+        build-essential libboost-all-dev libssl-dev libncurses-dev libnuma-dev \
         libaio-dev librdmacm-dev libibverbs-dev cmake autoconf libtool libcurl4-openssl-dev uuid-dev \
         zlib1g-dev git python3-dev libarchive-dev chrony \
         bpftrace bpfcc-tools linux-headers-$(uname -r) \
