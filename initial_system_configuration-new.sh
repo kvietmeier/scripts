@@ -13,7 +13,7 @@
 #     - Environment Stability: Disables OS auto-upgrades and firewalls for consistent benchmarking.
 #     - Lab User Setup: Creates 'labuser' with sudo rights, standardized home dirs, and bash aliases.
 #     - Dependency Management: Installs dev tools, libtool, RDMA headers, and system libraries.
-#     - Observability: Deploys eBPF tracing utilities (bpftrace, bcc-tools) with proper paths.
+#     - Network & Observability: Deploys core net-debug tools (mtr, tcpdump, etc.) and eBPF tracing utilities (bpftrace, bcc-tools, pwru).
 #     - Time Synchronization: Configures Chrony using OCI/AWS metadata sources.
 #     - Source Builds (Idempotent): Clones and compiles Dool, Fio, iPerf3, Sockperf, and Elbencho.
 # ==================================================================================================
@@ -133,7 +133,8 @@ if [ -f /etc/debian_version ]; then
         build-essential libboost-dev libssl-dev libncurses-dev libnuma-dev \
         libaio-dev librdmacm-dev libibverbs-dev cmake autoconf libtool libcurl4-openssl-dev uuid-dev \
         zlib1g-dev git python3-dev libarchive-dev chrony \
-        bpftrace bpfcc-tools linux-headers-$(uname -r)
+        bpftrace bpfcc-tools linux-headers-$(uname -r) \
+        mtr-tiny tcpdump tshark ethtool socat netcat-openbsd jq netperf
 elif [ -f /etc/redhat-release ]; then
     dnf groupinstall -y "Development Tools"
     dnf install -y epel-release
@@ -144,7 +145,8 @@ elif [ -f /etc/redhat-release ]; then
     dnf install -y numactl-devel libaio-devel boost-devel ncurses-devel \
         openssl-devel cmake rdma-core-devel libtool libcurl-devel libuuid-devel \
         zlib zlib-devel git python3-devel libarchive-devel chrony \
-        bpftrace bcc-tools kernel-devel kernel-headers
+        bpftrace bcc-tools kernel-devel kernel-headers \
+        mtr tcpdump wireshark-cli ethtool socat nc jq netperf
 fi
 
 ###====================================================================================###
@@ -193,6 +195,45 @@ _smart_build() {
     fi
 }
 
+_install_pwru() {
+    if [ -f "/usr/local/bin/pwru" ]; then
+        echo ">>> [SKIP] pwru already installed."
+    else
+        echo ">>> [INSTALL] pwru..."
+        local arch=$(uname -m)
+        local pwru_arch="amd64"
+        [ "$arch" = "aarch64" ] && pwru_arch="arm64"
+        
+        # Use --arg to pass variables into jq safely without bash quote escaping hell
+        local dl_url=$(curl -s https://api.github.com/repos/cilium/pwru/releases/latest | jq -r --arg a "linux-${pwru_arch}.tar.gz" '.assets[] | select(.name | endswith($a)) | .browser_download_url')
+        
+        if [ -n "$dl_url" ]; then
+            curl -sL "$dl_url" -o /tmp/pwru.tar.gz
+            tar -xzf /tmp/pwru.tar.gz -C /usr/local/bin/ pwru
+            rm -f /tmp/pwru.tar.gz
+            echo ">>> [SUCCESS] pwru installed."
+        else
+            echo "!!! [FAIL] Could not find pwru download URL."
+        fi
+    fi
+}
+
+_install_pwru
 _smart_build "https://github.com/scottchiefbaker/dool.git" "dool" "./install.py"
 _smart_build "https://github.com/axboe/fio.git" "fio" "./configure && make -j$(nproc) && make install"
-_smart_build "https://github.com/esnet/iperf.git" "iperf" "./configure && make -j$(
+_smart_build "https://github.com/esnet/iperf.git" "iperf" "./configure && make -j$(nproc) && make install && echo '/usr/local/lib' > /etc/ld.so.conf.d/iperf.conf && ldconfig"
+_smart_build "https://github.com/mellanox/sockperf" "sockperf" "./autogen.sh && ./configure && make -j$(nproc) && make install"
+
+# Elbencho (Rocky 9 Fix)
+if [ -f /etc/redhat-release ]; then
+    EL_CMD="find . -name 'CMakeCache.txt' -delete && \
+            find . -name 'CMakeFiles' -type d -exec rm -rf {} + && \
+            export OPENSSL_ROOT_DIR=/usr && export OPENSSL_LIBRARIES=/usr/lib64 && export OPENSSL_INCLUDE_DIR=/usr/include && \
+            make S3_SUPPORT=1 -j $(nproc) && \
+            make rpm && dnf install -y ./packaging/RPMS/x86_64/elbencho*.rpm"
+else
+    EL_CMD="make S3_SUPPORT=1 -j $(nproc) && make install"
+fi
+_smart_build "https://github.com/breuner/elbencho.git" "elbencho" "$EL_CMD"
+
+echo "compiletools_full.sh completed at $(date)" >> "$LOG_FILE"
