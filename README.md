@@ -7,13 +7,13 @@ Licensed under the Apache License 2.0
 
 ---
 
-Bash, ksh, csh, python, and misc Linux utilities.
+Bash, ksh, csh, python, misc Linux and Macc OS tools.  
 
-I may add my cloud-init scripts here as well but if you want to see them now they are in the Terraform repo.
+I may add my cloud-init scripts here as well but if you want to see them now they are in the Terraform repo.  
 
 ---
 
-#### NOTES
+### NOTES
 
 Recently added scripts for GCP, AWS, and VAST Data Clusters.
 
@@ -23,10 +23,11 @@ Folders:
 .
 ├── archive
 ├── aws
-├── env_setup
+├── gcp
+├── bash_env
+├── sys_info
 ├── Examples
 ├── fio
-├── gcp
 └── vast
 ```
 
@@ -80,7 +81,7 @@ Folders:
    ```
 
 ---
-
+In vast folder - 
 **net_probe.py** -  Monitor Replication Links
 
 In a VAST replication scenario across a cloud uplink, watch for these specific indicators in your CSV:
@@ -118,50 +119,46 @@ The FIO directory has bash scripts and FIO job files for testing attached disks 
 
 Note on FIO - You should always download and compile the latest version, like iperf and sockperf: the versions in the online repos are old and never have the right libraries compiled in.
 
-Drop this in your cloud-init file:
-
-``` yaml
-  #
-  ###------------ Compile Software ------------###
-  # dool
-  # FIO
-  # iperf3
-  # sockperf
-  #
-  - cd /root/git
-  #
-  ## Compile dool
-  - git clone https://github.com/scottchiefbaker/dool.git
-  - cd dool
-  - ./install.py
-  - cd ..
-  #
-  ## Compile FIO
-  - git clone https://github.com/axboe/fio.git
-  - cd fio
-  - ./configure
-  - make
-  - make install
-  - cd ..
-  #
-  # Compile/install iperf3
-  - git clone "https://github.com/esnet/iperf.git"
-  - cd iperf
-  - ./configure
-  - make
-  - make install
-  - /usr/sbin/ldconfig
-  - cd ..
-  #  
-  ## Compile/install sockperf
-  - git clone "https://github.com/mellanox/sockperf"
-  - cd sockperf
-  - ./autogen.sh
-  - ./configure
-  - make
-  - make install
-  - cd .. 
-#
-```
-
 ---
+
+### Linux Performance Lab Bootstrapper
+
+A robust, idempotent bash script to provision a fresh Linux system (Debian/Ubuntu or RHEL/Rocky) into a fully equipped performance testing, benchmarking, and observability environment.
+
+#### Overview
+
+When setting up test environments, OS background tasks and missing dependencies can ruin benchmark runs. `compiletools_full.sh` automates the configuration of a base Linux OS by handling system locks, disabling automatic upgrades that interrupt testing, establishing a standard user environment, and installing critical benchmarking and deep-kernel eBPF analysis tools from source.
+
+#### Key Features
+
+* **Idempotent Execution:** Safe to run multiple times. Source builds use `.build_success` markers to avoid recompiling existing tools, while `.bashrc` modifications are checked for prior existence.
+* **Cloud/OCI Aware Time Sync:** Automatically configures `chrony` by polling cloud metadata endpoints (e.g., `169.254.169.254`) for highly accurate timekeeping.
+* **System Stability:** Disables automatic OS updates (`unattended-upgrades`, `dnf-automatic`) and firewalls (`ufw`, `firewalld`) to ensure consistent, interference-free benchmark results.
+* **Standardized User Environment:** Creates a `labuser` account with passwordless sudo privileges. Deploys common shell aliases and vim settings for both `root` and `labuser`.
+* **Deep Network Observability & eBPF:** Pre-installs essential networking tools (`mtr`, `tcpdump`, `tshark`, `ethtool`, `socat`) alongside advanced eBPF tracing utilities (`bpftrace`, `bcc-tools`/`bpfcc-tools`, and `pwru` from Cilium).
+* **Robust Dependency Management:** Automatically handles tricky compilation dependencies across operating systems (including `libboost-all-dev` for Debian and RDMA core headers).
+* **Source-Compiled Tools:** Automatically clones, configures, and installs the latest versions of:
+  * [Dool](https://github.com/scottchiefbaker/dool) - Modern, Python 3 compatible `dstat` replacement.
+  * [Fio](https://github.com/axboe/fio) - Flexible I/O Tester for storage benchmarking.
+  * [iPerf3](https://github.com/esnet/iperf) - Network bandwidth measurement.
+  * [Sockperf](https://github.com/mellanox/sockperf) - High-performance network latency testing.
+  * [Elbencho](https://github.com/breuner/elbencho) - Distributed storage benchmark (includes automated RPM packaging fixes for RHEL/Rocky 9).
+
+#### Supported Operating Systems
+
+* **Debian-based:** Ubuntu 20.04 / 22.04 / 24.04, Debian 11 / 12
+* **RHEL-based:** RHEL, Rocky Linux, AlmaLinux, CentOS Stream (Versions 8 & 9)
+
+#### Usage
+
+You can run this script directly on a fresh system via SSH, or inject it as a cloud-init user-data script during instance provisioning.
+
+```bash
+# Download the script
+curl -O [https://raw.githubusercontent.com/](https://raw.githubusercontent.com/)<YOUR-USERNAME>/<YOUR-REPO>/main/compiletools_full.sh
+
+# Make it executable
+chmod +x compiletools_full.sh
+
+# Execute as root
+sudo ./compiletools_full.sh
