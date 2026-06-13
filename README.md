@@ -1,15 +1,9 @@
 ### Linux Scripting Projects
 
-A collection of practical Bash and shell scripting tools designed to automate and streamline common system administration tasks across Linux environments.
+A collection of practical Bash profile and shell scripting tools designed to automate and streamline common system administration tasks across Linux and Mac OSenvironments.
 
-Created and maintained by Karl Vietmeier / KCV Consulting
+Created and maintained by Karl Vietmeier Principal Architect, KCV Consulting
 Licensed under the Apache License 2.0
-
----
-
-Bash, ksh, csh, python, misc Linux and Macc OS tools.  
-
-I may add my cloud-init scripts here as well but if you want to see them now they are in the Terraform repo.  
 
 ---
 
@@ -17,20 +11,19 @@ I may add my cloud-init scripts here as well but if you want to see them now the
 
 Recently added scripts for GCP, AWS, and VAST Data Clusters.
 
-
 Folders:
+
 ```text
 .
-├── archive
-├── aws
-├── gcp
-├── bash_env
-├── sys_info
-├── Examples
-├── fio
-└── vast
+├── archive      (old scripts)
+├── aws          (AWS scripts)
+├── gcp          (GCP scripts)
+├── bash_env     (Bash environment setup)
+├── sys_info     (System Information scripts)
+├── Examples     (Examples, snippets)
+├── fio          (FIO scripts and job files)
+└── vast         (VAST scripts)
 ```
-
 
 ---
 
@@ -39,26 +32,7 @@ Folders:
 * [Dool GitHub](https://github.com/scottchiefbaker/dool/blob/master/README.md)
 * [Use Alien](https://www.serverlab.ca/tutorials/linux/administration-linux/how-install-rpm-packages-on-ubuntu-using-alien/)
 
-* Install dool with Ansible
-
-   ```yaml
-     # Install dool - multi-step - replaces dstat
-     - name: Download dool dool-1.3.0-1.noarch.rpm
-       get_url: 
-         url: "{{ dool_url }}"
-         dest: /tmp
-       tags:
-         - apt
-
-     - name: Install dool with alien
-       command: alien -i "{{ dool_pkg }}"
-       args: 
-         chdir: /tmp
-       tags:
-         - apt
-  ```
-
-* Run tools in the background - this small function lets you put a command into the background and logout:
+* Run dool in the background - this small function lets you put a command into the background and logout:
 
    ```bash
      # Run dool in background
@@ -123,9 +97,12 @@ Note on FIO - You should always download and compile the latest version, like ip
 
 ### Linux Performance Lab Bootstrapper
 
+`initial_system_configuration.sh`
+
 A robust, idempotent bash script to provision a fresh Linux system (Debian/Ubuntu or RHEL/Rocky) into a fully equipped performance testing, benchmarking, and observability environment.
 
 #### Overview
+
 
 When setting up test environments, OS background tasks and missing dependencies can ruin benchmark runs. `compiletools_full.sh` automates the configuration of a base Linux OS by handling system locks, disabling automatic upgrades that interrupt testing, establishing a standard user environment, and installing critical benchmarking and deep-kernel eBPF analysis tools from source.
 
@@ -148,17 +125,3 @@ When setting up test environments, OS background tasks and missing dependencies 
 
 * **Debian-based:** Ubuntu 20.04 / 22.04 / 24.04, Debian 11 / 12
 * **RHEL-based:** RHEL, Rocky Linux, AlmaLinux, CentOS Stream (Versions 8 & 9)
-
-#### Usage
-
-You can run this script directly on a fresh system via SSH, or inject it as a cloud-init user-data script during instance provisioning.
-
-```bash
-# Download the script
-curl -O [https://raw.githubusercontent.com/](https://raw.githubusercontent.com/)<YOUR-USERNAME>/<YOUR-REPO>/main/compiletools_full.sh
-
-# Make it executable
-chmod +x compiletools_full.sh
-
-# Execute as root
-sudo ./compiletools_full.sh
